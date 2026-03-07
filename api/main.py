@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.config import get_settings
-from api.routers import search, health, billing, auth, extract, markdown, screenshot, crawl, jobs
+from api.routers import search, health, billing, auth, extract, markdown, screenshot, crawl, jobs, pipeline
 from api.middleware.metrics import setup_metrics
 
 
@@ -75,9 +75,18 @@ def create_app() -> FastAPI:
     app.include_router(screenshot.router, prefix="/v1")
     app.include_router(crawl.router, prefix="/v1")
     app.include_router(jobs.router, prefix="/v1")
+    app.include_router(pipeline.router, prefix="/v1")
 
     # Prometheus metrics
     setup_metrics(app)
+
+    # Serve dashboard static files (must be last — catch-all mount)
+    import os
+    from pathlib import Path
+    dashboard_dir = Path(__file__).resolve().parent.parent / "dashboard"
+    if dashboard_dir.is_dir():
+        from fastapi.staticfiles import StaticFiles
+        app.mount("/", StaticFiles(directory=str(dashboard_dir), html=True), name="dashboard")
 
     return app
 

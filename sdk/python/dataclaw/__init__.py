@@ -1,19 +1,19 @@
-"""SearchClaw Python SDK — Cheap, fast search API for AI agents."""
+"""DataClaw Python SDK — Search, Extract, Crawl — One API."""
 
-from searchclaw.client import (
-    AsyncSearchClaw,
+from dataclaw.client import (
+    AsyncDataClaw,
     AuthError,
+    DataClaw,
+    DataClawError,
     RateLimitError,
-    SearchClaw,
-    SearchClawError,
 )
 
 __all__ = [
-    "SearchClaw",
-    "AsyncSearchClaw",
-    "SearchClawError",
+    "DataClaw",
+    "AsyncDataClaw",
+    "DataClawError",
     "AuthError",
     "RateLimitError",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

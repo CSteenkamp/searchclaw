@@ -1,14 +1,17 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: searchclaw
+namespace: dataclaw
 
 resources:
   - ../../base
 
 images:
-  - name: searchclaw/api
-    newName: ghcr.io/csteenkamp/searchclaw-api
+  - name: dataclaw/api
+    newName: ghcr.io/csteenkamp/dataclaw-api
+    newTag: latest
+  - name: dataclaw/worker
+    newName: ghcr.io/csteenkamp/dataclaw-worker
     newTag: latest
 
 patches:
@@ -55,6 +58,37 @@ patches:
                   limits:
                     cpu: "1"
                     memory: 1Gi
+
+  - target:
+      kind: Deployment
+      name: worker
+    patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: worker
+      spec:
+        replicas: 3
+        template:
+          spec:
+            containers:
+              - name: worker
+                resources:
+                  requests:
+                    cpu: "1"
+                    memory: 2Gi
+                  limits:
+                    cpu: "4"
+                    memory: 4Gi
+            affinity:
+              podAntiAffinity:
+                preferredDuringSchedulingIgnoredDuringExecution:
+                  - weight: 100
+                    podAffinityTerm:
+                      labelSelector:
+                        matchLabels:
+                          app: worker
+                      topologyKey: kubernetes.io/hostname
 
   - target:
       kind: HorizontalPodAutoscaler

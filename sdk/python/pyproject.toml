@@ -3,16 +3,16 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "searchclaw"
-version = "0.1.0"
-description = "Python SDK for the SearchClaw search API"
+name = "dataclaw"
+version = "0.2.0"
+description = "Python SDK for the DataClaw API — Search, Extract, Crawl"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
 authors = [
-    {name = "SearchClaw", email = "support@searchclaw.dev"},
+    {name = "DataClaw", email = "support@dataclaw.dev"},
 ]
-keywords = ["search", "api", "web-search", "ai", "rag"]
+keywords = ["search", "extract", "crawl", "scraping", "api", "ai", "rag", "pipeline"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -29,9 +29,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://searchclaw.dev"
-Documentation = "https://searchclaw.dev/docs"
-Repository = "https://github.com/searchclaw/searchclaw-python"
+Homepage = "https://dataclaw.dev"
+Documentation = "https://dataclaw.dev/docs"
+Repository = "https://github.com/dataclaw/dataclaw-python"
 
 [tool.setuptools.packages.find]
-include = ["searchclaw*"]
+include = ["dataclaw*"]

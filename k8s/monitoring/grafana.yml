@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-datasources
-  namespace: searchclaw
+  namespace: dataclaw
 data:
   datasources.yml: |
     apiVersion: 1
@@ -20,12 +20,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-dashboard-provisioning
-  namespace: searchclaw
+  namespace: dataclaw
 data:
   dashboards.yml: |
     apiVersion: 1
     providers:
-      - name: SearchClaw
+      - name: DataClaw
         orgId: 1
         folder: ""
         type: file
@@ -40,9 +40,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-dashboards
-  namespace: searchclaw
+  namespace: dataclaw
 data:
-  searchclaw.json: |
+  dataclaw.json: |
     {
       "annotations": { "list": [] },
       "editable": true,
@@ -57,12 +57,12 @@ data:
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
           "targets": [
             {
-              "expr": "sum(rate(searchclaw_requests_total[5m]))",
+              "expr": "sum(rate(dataclaw_requests_total[5m]))",
               "legendFormat": "Total",
               "refId": "A"
             },
             {
-              "expr": "sum(rate(searchclaw_requests_total[5m])) by (endpoint)",
+              "expr": "sum(rate(dataclaw_requests_total[5m])) by (endpoint)",
               "legendFormat": "{{endpoint}}",
               "refId": "B"
             }
@@ -80,17 +80,17 @@ data:
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
           "targets": [
             {
-              "expr": "histogram_quantile(0.50, sum(rate(searchclaw_response_time_seconds_bucket[5m])) by (le))",
+              "expr": "histogram_quantile(0.50, sum(rate(dataclaw_response_time_seconds_bucket[5m])) by (le))",
               "legendFormat": "p50",
               "refId": "A"
             },
             {
-              "expr": "histogram_quantile(0.95, sum(rate(searchclaw_response_time_seconds_bucket[5m])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(dataclaw_response_time_seconds_bucket[5m])) by (le))",
               "legendFormat": "p95",
               "refId": "B"
             },
             {
-              "expr": "histogram_quantile(0.99, sum(rate(searchclaw_response_time_seconds_bucket[5m])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(dataclaw_response_time_seconds_bucket[5m])) by (le))",
               "legendFormat": "p99",
               "refId": "C"
             }
@@ -108,7 +108,7 @@ data:
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
           "targets": [
             {
-              "expr": "sum(rate(searchclaw_cache_hits_total[5m])) / sum(rate(searchclaw_cache_requests_total[5m]))",
+              "expr": "sum(rate(dataclaw_cache_hits_total[5m])) / sum(rate(dataclaw_cache_requests_total[5m]))",
               "legendFormat": "Hit Ratio",
               "refId": "A"
             }
@@ -128,7 +128,7 @@ data:
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
           "targets": [
             {
-              "expr": "sum(rate(searchclaw_searxng_errors_total[5m])) by (instance, engine)",
+              "expr": "sum(rate(dataclaw_searxng_errors_total[5m])) by (instance, engine)",
               "legendFormat": "{{instance}} / {{engine}}",
               "refId": "A"
             }
@@ -146,12 +146,12 @@ data:
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
           "targets": [
             {
-              "expr": "sum(increase(searchclaw_credits_consumed_total[1h]))",
+              "expr": "sum(increase(dataclaw_credits_consumed_total[1h]))",
               "legendFormat": "Credits / hour",
               "refId": "A"
             },
             {
-              "expr": "sum(increase(searchclaw_credits_consumed_total[24h]))",
+              "expr": "sum(increase(dataclaw_credits_consumed_total[24h]))",
               "legendFormat": "Credits / 24h",
               "refId": "B"
             }
@@ -169,7 +169,7 @@ data:
           "gridPos": { "h": 4, "w": 6, "x": 12, "y": 16 },
           "targets": [
             {
-              "expr": "searchclaw_active_users",
+              "expr": "dataclaw_active_users",
               "legendFormat": "Active Users",
               "refId": "A"
             }
@@ -184,7 +184,7 @@ data:
           "gridPos": { "h": 4, "w": 6, "x": 18, "y": 16 },
           "targets": [
             {
-              "expr": "sum(rate(searchclaw_requests_total{status_code=~\"5..\"}[5m])) / sum(rate(searchclaw_requests_total[5m]))",
+              "expr": "sum(rate(dataclaw_requests_total{status_code=~\"5..\"}[5m])) / sum(rate(dataclaw_requests_total[5m]))",
               "legendFormat": "Error Rate",
               "refId": "A"
             }
@@ -209,7 +209,7 @@ data:
           "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
           "targets": [
             {
-              "expr": "topk(10, sum(increase(searchclaw_requests_total[24h])) by (endpoint))",
+              "expr": "topk(10, sum(increase(dataclaw_requests_total[24h])) by (endpoint))",
               "legendFormat": "{{endpoint}}",
               "refId": "A",
               "format": "table",
@@ -222,11 +222,11 @@ data:
         }
       ],
       "schemaVersion": 39,
-      "tags": ["searchclaw"],
+      "tags": ["dataclaw"],
       "templating": { "list": [] },
       "time": { "from": "now-6h", "to": "now" },
-      "title": "SearchClaw Overview",
-      "uid": "searchclaw-overview",
+      "title": "DataClaw Overview",
+      "uid": "dataclaw-overview",
       "version": 1
     }
 
@@ -235,7 +235,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
-  namespace: searchclaw
+  namespace: dataclaw
   labels:
     app: grafana
 spec:
@@ -304,7 +304,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: grafana
-  namespace: searchclaw
+  namespace: dataclaw
   labels:
     app: grafana
 spec:

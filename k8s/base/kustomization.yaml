@@ -10,6 +10,7 @@ resources:
   - redis/statefulset.yml
   - postgres/statefulset.yml
   - searxng/deployment.yml
+  - worker/deployment.yml
   - cloudflared/deployment.yml
   - monitoring/prometheus.yml
   - monitoring/grafana.yml

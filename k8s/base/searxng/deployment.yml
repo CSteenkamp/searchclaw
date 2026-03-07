@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: searxng
-  namespace: searchclaw
+  namespace: dataclaw
   labels:
     app: searxng
 spec:
@@ -44,7 +44,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: searxng
-  namespace: searchclaw
+  namespace: dataclaw
 spec:
   selector:
     app: searxng
@@ -57,11 +57,11 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: searxng-config
-  namespace: searchclaw
+  namespace: dataclaw
 data:
   settings.yml: |
     general:
-      instance_name: "SearchClaw Backend"
+      instance_name: "DataClaw Backend"
       debug: false
     search:
       safe_search: 1

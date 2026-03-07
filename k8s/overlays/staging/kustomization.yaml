@@ -1,14 +1,17 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: searchclaw
+namespace: dataclaw
 
 resources:
   - ../../base
 
 images:
-  - name: searchclaw/api
-    newName: ghcr.io/csteenkamp/searchclaw-api
+  - name: dataclaw/api
+    newName: ghcr.io/csteenkamp/dataclaw-api
+    newTag: latest
+  - name: dataclaw/worker
+    newName: ghcr.io/csteenkamp/dataclaw-worker
     newTag: latest
 
 patches:
@@ -66,6 +69,28 @@ patches:
         name: cloudflared
       spec:
         replicas: 1
+
+  - target:
+      kind: Deployment
+      name: worker
+    patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: worker
+      spec:
+        replicas: 1
+        template:
+          spec:
+            containers:
+              - name: worker
+                resources:
+                  requests:
+                    cpu: 250m
+                    memory: 512Mi
+                  limits:
+                    cpu: "1"
+                    memory: 1Gi
 
   - target:
       kind: HorizontalPodAutoscaler

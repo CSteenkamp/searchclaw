@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: dataclaw
+  labels:
+    app: worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+        - name: worker
+          image: dataclaw/worker:latest
+          command: ["celery", "-A", "api.workers.crawl_worker", "worker", "--loglevel=info", "--concurrency=2"]
+          envFrom:
+            - secretRef:
+                name: dataclaw-secrets
+            - configMapRef:
+                name: dataclaw-config
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          livenessProbe:
+            exec:
+              command: ["celery", "-A", "api.workers.crawl_worker", "inspect", "ping", "--timeout", "5"]
+            initialDelaySeconds: 30
+            periodSeconds: 60

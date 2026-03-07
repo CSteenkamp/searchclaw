@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cloudflared
-  namespace: searchclaw
+  namespace: dataclaw
   labels:
     app: cloudflared
 spec:
@@ -39,7 +39,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: cloudflared-secrets
-  namespace: searchclaw
+  namespace: dataclaw
 type: Opaque
 stringData:
   TUNNEL_TOKEN: "your-tunnel-token-here"
