@@ -1,6 +1,8 @@
 """Shared test fixtures for DataClaw API tests."""
 
 import asyncio
+from contextlib import ExitStack
+
 import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, patch
@@ -9,7 +11,6 @@ from httpx import AsyncClient, ASGITransport
 from api.main import app
 from api.middleware.auth import get_api_key_user
 from api.services import cache as cache_module
-from api.services import searxng_client as searxng_module
 
 
 @pytest.fixture(scope="session")
@@ -53,21 +54,39 @@ def mock_redis():
     async def fake_ping():
         return True
 
-    with patch.object(cache_module, "get_cached", side_effect=fake_get_cached), \
-         patch.object(cache_module, "set_cached", side_effect=fake_set_cached), \
-         patch.object(cache_module, "get_counter", side_effect=fake_get_counter), \
-         patch.object(cache_module, "incr_counter", side_effect=fake_incr_counter), \
-         patch.object(cache_module, "decr_counter", side_effect=fake_decr_counter), \
-         patch.object(cache_module, "ping_cache", side_effect=fake_ping), \
-         patch("api.routers.search.get_cached", side_effect=fake_get_cached), \
-         patch("api.routers.search.set_cached", side_effect=fake_set_cached), \
-         patch("api.middleware.rate_limit.incr_counter", side_effect=fake_incr_counter), \
-         patch("api.middleware.rate_limit.decr_counter", side_effect=fake_decr_counter), \
-         patch("api.middleware.auth.get_cached", side_effect=fake_get_cached), \
-         patch("api.middleware.auth.set_cached", side_effect=fake_set_cached), \
-         patch("api.middleware.auth.get_counter", side_effect=fake_get_counter), \
-         patch("api.middleware.auth.incr_counter", side_effect=fake_incr_counter), \
-         patch("api.middleware.rate_limit.record_usage_to_db", new_callable=AsyncMock):
+    patches = [
+        patch.object(cache_module, "get_cached", side_effect=fake_get_cached),
+        patch.object(cache_module, "set_cached", side_effect=fake_set_cached),
+        patch.object(cache_module, "get_counter", side_effect=fake_get_counter),
+        patch.object(cache_module, "incr_counter", side_effect=fake_incr_counter),
+        patch.object(cache_module, "decr_counter", side_effect=fake_decr_counter),
+        patch.object(cache_module, "ping_cache", side_effect=fake_ping),
+        # Search router
+        patch("api.routers.search.get_cached", side_effect=fake_get_cached),
+        patch("api.routers.search.set_cached", side_effect=fake_set_cached),
+        # Extract router
+        patch("api.routers.extract.get_cached", side_effect=fake_get_cached),
+        patch("api.routers.extract.set_cached", side_effect=fake_set_cached),
+        # Markdown router
+        patch("api.routers.markdown.get_cached", side_effect=fake_get_cached),
+        patch("api.routers.markdown.set_cached", side_effect=fake_set_cached),
+        # Screenshot router
+        patch("api.routers.screenshot.get_cached", side_effect=fake_get_cached),
+        patch("api.routers.screenshot.set_cached", side_effect=fake_set_cached),
+        # Rate limit middleware
+        patch("api.middleware.rate_limit.incr_counter", side_effect=fake_incr_counter),
+        patch("api.middleware.rate_limit.decr_counter", side_effect=fake_decr_counter),
+        patch("api.middleware.rate_limit.record_usage_to_db", new_callable=AsyncMock),
+        # Auth middleware
+        patch("api.middleware.auth.get_cached", side_effect=fake_get_cached),
+        patch("api.middleware.auth.set_cached", side_effect=fake_set_cached),
+        patch("api.middleware.auth.get_counter", side_effect=fake_get_counter),
+        patch("api.middleware.auth.incr_counter", side_effect=fake_incr_counter),
+    ]
+
+    with ExitStack() as stack:
+        for p in patches:
+            stack.enter_context(p)
         yield {"store": store, "counters": counters}
 
 

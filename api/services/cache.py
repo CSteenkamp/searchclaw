@@ -80,3 +80,8 @@ async def decr_counter(key: str, amount: int = 1) -> int:
     if not _redis:
         return 0
     return await _redis.decrby(key, amount)
+
+
+def get_redis_client():
+    """Get the raw Redis client for direct operations (e.g., job tracking)."""
+    return _redis

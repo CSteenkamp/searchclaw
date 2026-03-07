@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.config import get_settings
-from api.routers import search, health, billing, auth
+from api.routers import search, health, billing, auth, extract, markdown, screenshot, crawl, jobs
 from api.middleware.metrics import setup_metrics
 
 
@@ -23,15 +23,25 @@ async def lifespan(app: FastAPI):
     await init_db(settings.database_url)
     init_searxng_pool(settings.searxng_urls)
 
-    # Placeholder: browser pool init (spec 2)
-    # Placeholder: worker registration (spec 2)
+    # Browser pool init (spec 2)
+    from api.services.browser_pool import init_browser_pool, close_browser_pool
+    try:
+        await init_browser_pool()
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("Browser pool failed to start — extraction endpoints unavailable")
 
     yield
 
     # Shutdown
     from api.services.cache import close_cache
     from api.services.database import close_db
+    from api.services.browser_pool import close_browser_pool as _close_pool
 
+    try:
+        await _close_pool()
+    except Exception:
+        pass
     await close_cache()
     await close_db()
 
@@ -60,6 +70,11 @@ def create_app() -> FastAPI:
     app.include_router(search.router, prefix="/v1")
     app.include_router(billing.router, prefix="/v1")
     app.include_router(auth.router, prefix="/v1")
+    app.include_router(extract.router, prefix="/v1")
+    app.include_router(markdown.router, prefix="/v1")
+    app.include_router(screenshot.router, prefix="/v1")
+    app.include_router(crawl.router, prefix="/v1")
+    app.include_router(jobs.router, prefix="/v1")
 
     # Prometheus metrics
     setup_metrics(app)

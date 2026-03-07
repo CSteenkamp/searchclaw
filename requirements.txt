@@ -34,6 +34,7 @@ lxml>=5.0.0
 # LLM clients (spec 2)
 openai>=1.0.0
 anthropic>=0.40.0
+tiktoken>=0.7.0
 
 # Testing
 pytest>=8.0.0

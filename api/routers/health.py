@@ -41,10 +41,22 @@ async def readyz():
     except Exception:
         checks["searxng"] = False
 
-    # Browser pool status (placeholder — will be wired in spec 2)
-    checks["browser_pool"] = True
+    # Check browser pool
+    browser_pool_ready = False
+    try:
+        from api.services.browser_pool import get_browser_pool
 
-    all_ok = all(checks.values())
+        pool = get_browser_pool()
+        if pool:
+            pool_status = pool.status
+            browser_pool_ready = pool_status.get("ready", False)
+            checks["browser_pool"] = pool_status
+        else:
+            checks["browser_pool"] = False
+    except Exception:
+        checks["browser_pool"] = False
+
+    all_ok = all([checks["redis"], checks["postgres"], checks["searxng"], browser_pool_ready])
     return {
         "status": "ok" if all_ok else "degraded",
         "checks": checks,
