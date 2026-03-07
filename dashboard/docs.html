@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Documentation — SearchClaw</title>
+  <meta name="description" content="Complete API documentation for SearchClaw web search API.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#0f172a',
+            darker: '#0a1021',
+            card: '#1e293b',
+            accent: '#22d3ee',
+            accentHover: '#06b6d4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html { scroll-behavior: smooth; }
+    .gradient-text {
+      background: linear-gradient(135deg, #22d3ee 0%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    pre code { font-size: 0.8125rem; line-height: 1.6; }
+    .sidebar-link.active { color: #22d3ee; border-left-color: #22d3ee; }
+    .method-get { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+  </style>
+</head>
+<body class="bg-dark text-gray-200 antialiased">
+
+  <!-- Nav -->
+  <nav class="fixed top-0 w-full bg-dark/80 backdrop-blur-md border-b border-white/5 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="index.html" class="text-xl font-bold text-white flex items-center gap-2">
+        <svg class="w-7 h-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+        SearchClaw
+      </a>
+      <div class="hidden md:flex items-center gap-8 text-sm">
+        <a href="index.html" class="text-gray-400 hover:text-white transition">Home</a>
+        <a href="docs.html" class="text-white font-medium">Docs</a>
+        <a href="playground.html" class="text-gray-400 hover:text-white transition">Playground</a>
+      </div>
+      <a href="index.html#pricing" class="bg-accent hover:bg-accentHover text-dark font-semibold px-4 py-2 rounded-lg text-sm transition">Get API Key</a>
+    </div>
+  </nav>
+
+  <div class="pt-16 flex">
+    <!-- Sidebar -->
+    <aside class="hidden lg:block w-64 fixed top-16 left-0 h-[calc(100vh-4rem)] overflow-y-auto border-r border-white/5 p-6">
+      <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Getting Started</div>
+      <a href="#authentication" class="sidebar-link block text-sm text-gray-400 hover:text-white py-1.5 pl-3 border-l-2 border-transparent">Authentication</a>
+      <a href="#base-url" class="sidebar-link block text-sm text-gray-400 hover:text-white py-1.5 pl-3 border-l-2 border-transparent">Base URL</a>
+      <a href="#rate-limiting" class="sidebar-link block text-sm text-gray-400 hover:text-white py-1.5 pl-3 border-l-2 border-transparent">Rate Limiting</a>
+      <a href="#errors" class="sidebar-link block text-sm text-gray-400 hover:text-white py-1.5 pl-3 border-l-2 border-transparent">Error Handling</a>
+
+      <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Endpoints</div>
+      <a href="#search" class="sidebar-link block text-sm text-gray-400 hover:text-white py-1.5 pl-3 border-l-2 border-transparent">Web Search</a>
+      <a href="#search-ai" class="sidebar-link block text-sm text-gray-400 hover:text-white py-1.5 pl-3 border-l-2 border-transparent">AI Search</a>
+      <a href="#news" class="sidebar-link block text-sm text-gray-400 hover:text-white py-1.5 pl-3 border-l-2 border-transparent">News Search</a>
+      <a href="#images" class="sidebar-link block text-sm text-gray-400 hover:text-white py-1.5 pl-3 border-l-2 border-transparent">Image Search</a>
+      <a href="#suggest" class="sidebar-link block text-sm text-gray-400 hover:text-white py-1.5 pl-3 border-l-2 border-transparent">Suggest</a>
+      <a href="#usage" class="sidebar-link block text-sm text-gray-400 hover:text-white py-1.5 pl-3 border-l-2 border-transparent">Usage</a>
+
+      <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Reference</div>
+      <a href="#response-headers" class="sidebar-link block text-sm text-gray-400 hover:text-white py-1.5 pl-3 border-l-2 border-transparent">Response Headers</a>
+      <a href="#sdks" class="sidebar-link block text-sm text-gray-400 hover:text-white py-1.5 pl-3 border-l-2 border-transparent">SDKs</a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 lg:ml-64 px-6 md:px-12 py-12 max-w-4xl">
+
+      <h1 class="text-4xl font-bold text-white mb-2">API Documentation</h1>
+      <p class="text-gray-400 mb-12">Everything you need to integrate SearchClaw into your application.</p>
+
+      <!-- Authentication -->
+      <section id="authentication" class="mb-16">
+        <h2 class="text-2xl font-bold text-white mb-4">Authentication</h2>
+        <p class="text-gray-400 mb-4">Every request requires an API key. Pass it via the <code class="text-accent bg-accent/10 px-1.5 py-0.5 rounded text-sm">X-API-Key</code> header or as a Bearer token.</p>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-4"><code class="text-gray-300"><span class="text-gray-500"># Option 1: X-API-Key header</span>
+curl https://api.searchclaw.dev/v1/search?q=hello \
+  -H <span class="text-yellow-300">"X-API-Key: sc_live_xxxxxxxxxxxxxxxxxx"</span>
+
+<span class="text-gray-500"># Option 2: Bearer token</span>
+curl https://api.searchclaw.dev/v1/search?q=hello \
+  -H <span class="text-yellow-300">"Authorization: Bearer sc_live_xxxxxxxxxxxxxxxxxx"</span></code></pre>
+        <div class="bg-card rounded-lg p-4 border border-white/5">
+          <p class="text-sm text-gray-400"><strong class="text-white">Key prefixes:</strong> Production keys start with <code class="text-accent">sc_live_</code> and sandbox keys start with <code class="text-accent">sc_test_</code>. Sandbox keys return mock data and are not metered.</p>
+        </div>
+      </section>
+
+      <!-- Base URL -->
+      <section id="base-url" class="mb-16">
+        <h2 class="text-2xl font-bold text-white mb-4">Base URL</h2>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto"><code class="text-gray-300">https://api.searchclaw.dev/v1</code></pre>
+        <p class="text-gray-400 mt-4 text-sm">All endpoints are relative to this base URL. HTTPS is required.</p>
+      </section>
+
+      <!-- Rate Limiting -->
+      <section id="rate-limiting" class="mb-16">
+        <h2 class="text-2xl font-bold text-white mb-4">Rate Limiting</h2>
+        <p class="text-gray-400 mb-4">Rate limits are per API key and depend on your plan tier. Limits are enforced using a sliding window algorithm.</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Plan</th>
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Rate Limit</th>
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Monthly Credits</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-300">
+              <tr class="border-b border-white/5"><td class="py-3 px-4">Free</td><td class="py-3 px-4">1 req/sec</td><td class="py-3 px-4">1,000</td></tr>
+              <tr class="border-b border-white/5"><td class="py-3 px-4">Starter</td><td class="py-3 px-4">5 req/sec</td><td class="py-3 px-4">15,000</td></tr>
+              <tr class="border-b border-white/5"><td class="py-3 px-4">Pro</td><td class="py-3 px-4">20 req/sec</td><td class="py-3 px-4">100,000</td></tr>
+              <tr><td class="py-3 px-4">Scale</td><td class="py-3 px-4">50 req/sec</td><td class="py-3 px-4">500,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-gray-400 mt-4 text-sm">When rate limited, you'll receive a <code class="text-accent bg-accent/10 px-1.5 py-0.5 rounded text-sm">429</code> response with a <code class="text-accent bg-accent/10 px-1.5 py-0.5 rounded text-sm">Retry-After</code> header indicating seconds to wait.</p>
+      </section>
+
+      <!-- Errors -->
+      <section id="errors" class="mb-16">
+        <h2 class="text-2xl font-bold text-white mb-4">Error Handling</h2>
+        <p class="text-gray-400 mb-4">All errors return a consistent JSON format:</p>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">{
+  <span class="text-cyan-300">"error"</span>: {
+    <span class="text-cyan-300">"code"</span>: <span class="text-yellow-300">"rate_limit_exceeded"</span>,
+    <span class="text-cyan-300">"message"</span>: <span class="text-yellow-300">"Rate limit exceeded. Retry after 2 seconds."</span>,
+    <span class="text-cyan-300">"status"</span>: <span class="text-purple-400">429</span>
+  }
+}</code></pre>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Status</th>
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Code</th>
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Description</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-300">
+              <tr class="border-b border-white/5"><td class="py-3 px-4 font-mono">400</td><td class="py-3 px-4"><code>invalid_request</code></td><td class="py-3 px-4">Missing or invalid parameters</td></tr>
+              <tr class="border-b border-white/5"><td class="py-3 px-4 font-mono">401</td><td class="py-3 px-4"><code>unauthorized</code></td><td class="py-3 px-4">Missing or invalid API key</td></tr>
+              <tr class="border-b border-white/5"><td class="py-3 px-4 font-mono">403</td><td class="py-3 px-4"><code>forbidden</code></td><td class="py-3 px-4">API key doesn't have access to this resource</td></tr>
+              <tr class="border-b border-white/5"><td class="py-3 px-4 font-mono">429</td><td class="py-3 px-4"><code>rate_limit_exceeded</code></td><td class="py-3 px-4">Too many requests</td></tr>
+              <tr class="border-b border-white/5"><td class="py-3 px-4 font-mono">402</td><td class="py-3 px-4"><code>credits_exhausted</code></td><td class="py-3 px-4">Monthly credits used up</td></tr>
+              <tr><td class="py-3 px-4 font-mono">500</td><td class="py-3 px-4"><code>internal_error</code></td><td class="py-3 px-4">Server error — retry with backoff</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ========== ENDPOINTS ========== -->
+
+      <div class="border-t border-white/5 pt-12 mb-12">
+        <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Endpoints</h2>
+      </div>
+
+      <!-- /v1/search -->
+      <section id="search" class="mb-16">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="method-get text-xs font-bold px-2.5 py-1 rounded">GET</span>
+          <h2 class="text-2xl font-bold text-white">/v1/search</h2>
+        </div>
+        <p class="text-gray-400 mb-6">Perform a web search and return structured results from multiple engines.</p>
+
+        <h3 class="text-white font-semibold mb-3">Parameters</h3>
+        <div class="overflow-x-auto mb-6">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Param</th>
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Type</th>
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Required</th>
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Default</th>
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Description</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-300">
+              <tr class="border-b border-white/5"><td class="py-2 px-4 font-mono text-accent">q</td><td class="py-2 px-4">string</td><td class="py-2 px-4">Yes</td><td class="py-2 px-4">—</td><td class="py-2 px-4">Search query</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-4 font-mono text-accent">count</td><td class="py-2 px-4">int</td><td class="py-2 px-4">No</td><td class="py-2 px-4">10</td><td class="py-2 px-4">Results per page (max 50)</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-4 font-mono text-accent">offset</td><td class="py-2 px-4">int</td><td class="py-2 px-4">No</td><td class="py-2 px-4">0</td><td class="py-2 px-4">Pagination offset</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-4 font-mono text-accent">country</td><td class="py-2 px-4">string</td><td class="py-2 px-4">No</td><td class="py-2 px-4">—</td><td class="py-2 px-4">Country code (US, GB, ZA, etc.)</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-4 font-mono text-accent">language</td><td class="py-2 px-4">string</td><td class="py-2 px-4">No</td><td class="py-2 px-4">en</td><td class="py-2 px-4">Language code</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-4 font-mono text-accent">safesearch</td><td class="py-2 px-4">int</td><td class="py-2 px-4">No</td><td class="py-2 px-4">1</td><td class="py-2 px-4">0=off, 1=moderate, 2=strict</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-4 font-mono text-accent">freshness</td><td class="py-2 px-4">string</td><td class="py-2 px-4">No</td><td class="py-2 px-4">—</td><td class="py-2 px-4"><code>day</code>, <code>week</code>, <code>month</code>, <code>year</code></td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-4 font-mono text-accent">engines</td><td class="py-2 px-4">string</td><td class="py-2 px-4">No</td><td class="py-2 px-4">—</td><td class="py-2 px-4">Comma-separated engine list</td></tr>
+              <tr><td class="py-2 px-4 font-mono text-accent">format</td><td class="py-2 px-4">string</td><td class="py-2 px-4">No</td><td class="py-2 px-4">json</td><td class="py-2 px-4"><code>json</code> or <code>markdown</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="text-white font-semibold mb-3">Example Request</h3>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">curl <span class="text-yellow-300">"https://api.searchclaw.dev/v1/search?q=kubernetes+tutorial&count=5"</span> \
+  -H <span class="text-yellow-300">"X-API-Key: sc_live_xxxxxxxxxx"</span></code></pre>
+
+        <h3 class="text-white font-semibold mb-3">Example Response</h3>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto"><code class="text-gray-300">{
+  <span class="text-cyan-300">"query"</span>: <span class="text-yellow-300">"kubernetes tutorial"</span>,
+  <span class="text-cyan-300">"results"</span>: [
+    {
+      <span class="text-cyan-300">"title"</span>: <span class="text-yellow-300">"Kubernetes Basics - Official Tutorial"</span>,
+      <span class="text-cyan-300">"url"</span>: <span class="text-yellow-300">"https://kubernetes.io/docs/tutorials/kubernetes-basics/"</span>,
+      <span class="text-cyan-300">"snippet"</span>: <span class="text-yellow-300">"Learn Kubernetes basics with this interactive tutorial..."</span>,
+      <span class="text-cyan-300">"source"</span>: <span class="text-yellow-300">"google"</span>,
+      <span class="text-cyan-300">"position"</span>: <span class="text-purple-400">1</span>
+    }
+  ],
+  <span class="text-cyan-300">"infobox"</span>: {
+    <span class="text-cyan-300">"title"</span>: <span class="text-yellow-300">"Kubernetes"</span>,
+    <span class="text-cyan-300">"content"</span>: <span class="text-yellow-300">"Kubernetes is an open-source container orchestration system..."</span>,
+    <span class="text-cyan-300">"url"</span>: <span class="text-yellow-300">"https://en.wikipedia.org/wiki/Kubernetes"</span>
+  },
+  <span class="text-cyan-300">"suggestions"</span>: [<span class="text-yellow-300">"kubernetes tutorial for beginners"</span>, <span class="text-yellow-300">"kubernetes vs docker"</span>],
+  <span class="text-cyan-300">"meta"</span>: {
+    <span class="text-cyan-300">"total_results"</span>: <span class="text-purple-400">5</span>,
+    <span class="text-cyan-300">"cached"</span>: <span class="text-purple-400">false</span>,
+    <span class="text-cyan-300">"response_time_ms"</span>: <span class="text-purple-400">342</span>,
+    <span class="text-cyan-300">"engines_used"</span>: [<span class="text-yellow-300">"google"</span>, <span class="text-yellow-300">"bing"</span>, <span class="text-yellow-300">"duckduckgo"</span>]
+  }
+}</code></pre>
+      </section>
+
+      <!-- /v1/search/ai -->
+      <section id="search-ai" class="mb-16">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="method-get text-xs font-bold px-2.5 py-1 rounded">GET</span>
+          <h2 class="text-2xl font-bold text-white">/v1/search/ai</h2>
+        </div>
+        <p class="text-gray-400 mb-4">LLM-optimized search that returns RAG-ready results. Costs <strong class="text-white">2 credits</strong> per query.</p>
+        <div class="bg-card rounded-lg p-4 border border-accent/20 mb-6">
+          <p class="text-sm text-gray-400"><strong class="text-accent">Premium endpoint:</strong> Results include longer snippets (up to 500 chars), markdown formatting, deduplication, relevance ranking, and a <code class="text-accent">context</code> field with concatenated top-3 snippets ready for RAG injection.</p>
+        </div>
+
+        <h3 class="text-white font-semibold mb-3">Parameters</h3>
+        <p class="text-gray-400 text-sm mb-4">Same parameters as <code class="text-accent">/v1/search</code>.</p>
+
+        <h3 class="text-white font-semibold mb-3">Example Request</h3>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">curl <span class="text-yellow-300">"https://api.searchclaw.dev/v1/search/ai?q=kubernetes+pod+restart+policy"</span> \
+  -H <span class="text-yellow-300">"X-API-Key: sc_live_xxxxxxxxxx"</span></code></pre>
+
+        <h3 class="text-white font-semibold mb-3">Example Response</h3>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto"><code class="text-gray-300">{
+  <span class="text-cyan-300">"query"</span>: <span class="text-yellow-300">"kubernetes pod restart policy"</span>,
+  <span class="text-cyan-300">"context"</span>: <span class="text-yellow-300">"A PodSpec has a restartPolicy field with possible values Always, OnFailure, and Never. The default value is Always. The restart policy applies to all containers in the Pod..."</span>,
+  <span class="text-cyan-300">"results"</span>: [
+    {
+      <span class="text-cyan-300">"title"</span>: <span class="text-yellow-300">"Pod Lifecycle | Kubernetes"</span>,
+      <span class="text-cyan-300">"url"</span>: <span class="text-yellow-300">"https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/"</span>,
+      <span class="text-cyan-300">"snippet"</span>: <span class="text-yellow-300">"A PodSpec has a restartPolicy field with possible values Always, OnFailure, and Never..."</span>,
+      <span class="text-cyan-300">"source"</span>: <span class="text-yellow-300">"google"</span>,
+      <span class="text-cyan-300">"position"</span>: <span class="text-purple-400">1</span>
+    }
+  ],
+  <span class="text-cyan-300">"meta"</span>: {
+    <span class="text-cyan-300">"credits_used"</span>: <span class="text-purple-400">2</span>,
+    <span class="text-cyan-300">"cached"</span>: <span class="text-purple-400">true</span>,
+    <span class="text-cyan-300">"response_time_ms"</span>: <span class="text-purple-400">12</span>
+  }
+}</code></pre>
+      </section>
+
+      <!-- /v1/news -->
+      <section id="news" class="mb-16">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="method-get text-xs font-bold px-2.5 py-1 rounded">GET</span>
+          <h2 class="text-2xl font-bold text-white">/v1/news</h2>
+        </div>
+        <p class="text-gray-400 mb-6">Search for news articles. Returns results with publication dates, source names, and thumbnails.</p>
+
+        <h3 class="text-white font-semibold mb-3">Parameters</h3>
+        <p class="text-gray-400 text-sm mb-4">Same parameters as <code class="text-accent">/v1/search</code>.</p>
+
+        <h3 class="text-white font-semibold mb-3">Example Response</h3>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto"><code class="text-gray-300">{
+  <span class="text-cyan-300">"query"</span>: <span class="text-yellow-300">"AI startups 2026"</span>,
+  <span class="text-cyan-300">"results"</span>: [
+    {
+      <span class="text-cyan-300">"title"</span>: <span class="text-yellow-300">"Top AI Startups to Watch in 2026"</span>,
+      <span class="text-cyan-300">"url"</span>: <span class="text-yellow-300">"https://example.com/article"</span>,
+      <span class="text-cyan-300">"snippet"</span>: <span class="text-yellow-300">"The AI landscape continues to evolve rapidly..."</span>,
+      <span class="text-cyan-300">"published_date"</span>: <span class="text-yellow-300">"2026-03-01T10:30:00Z"</span>,
+      <span class="text-cyan-300">"source_name"</span>: <span class="text-yellow-300">"TechCrunch"</span>,
+      <span class="text-cyan-300">"thumbnail"</span>: <span class="text-yellow-300">"https://example.com/thumb.jpg"</span>,
+      <span class="text-cyan-300">"position"</span>: <span class="text-purple-400">1</span>
+    }
+  ],
+  <span class="text-cyan-300">"meta"</span>: {
+    <span class="text-cyan-300">"total_results"</span>: <span class="text-purple-400">10</span>,
+    <span class="text-cyan-300">"cached"</span>: <span class="text-purple-400">false</span>,
+    <span class="text-cyan-300">"response_time_ms"</span>: <span class="text-purple-400">456</span>,
+    <span class="text-cyan-300">"engines_used"</span>: [<span class="text-yellow-300">"google news"</span>, <span class="text-yellow-300">"bing news"</span>]
+  }
+}</code></pre>
+      </section>
+
+      <!-- /v1/images -->
+      <section id="images" class="mb-16">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="method-get text-xs font-bold px-2.5 py-1 rounded">GET</span>
+          <h2 class="text-2xl font-bold text-white">/v1/images</h2>
+        </div>
+        <p class="text-gray-400 mb-6">Search for images. Returns thumbnails, source URLs, and dimensions.</p>
+
+        <h3 class="text-white font-semibold mb-3">Parameters</h3>
+        <p class="text-gray-400 text-sm mb-4">Same parameters as <code class="text-accent">/v1/search</code>.</p>
+
+        <h3 class="text-white font-semibold mb-3">Example Response</h3>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto"><code class="text-gray-300">{
+  <span class="text-cyan-300">"query"</span>: <span class="text-yellow-300">"golden retriever puppy"</span>,
+  <span class="text-cyan-300">"results"</span>: [
+    {
+      <span class="text-cyan-300">"title"</span>: <span class="text-yellow-300">"Golden Retriever Puppy"</span>,
+      <span class="text-cyan-300">"thumbnail_url"</span>: <span class="text-yellow-300">"https://example.com/thumb.jpg"</span>,
+      <span class="text-cyan-300">"source_url"</span>: <span class="text-yellow-300">"https://example.com/page"</span>,
+      <span class="text-cyan-300">"width"</span>: <span class="text-purple-400">1200</span>,
+      <span class="text-cyan-300">"height"</span>: <span class="text-purple-400">800</span>,
+      <span class="text-cyan-300">"source_name"</span>: <span class="text-yellow-300">"Example.com"</span>,
+      <span class="text-cyan-300">"position"</span>: <span class="text-purple-400">1</span>
+    }
+  ],
+  <span class="text-cyan-300">"meta"</span>: {
+    <span class="text-cyan-300">"total_results"</span>: <span class="text-purple-400">10</span>,
+    <span class="text-cyan-300">"cached"</span>: <span class="text-purple-400">false</span>,
+    <span class="text-cyan-300">"response_time_ms"</span>: <span class="text-purple-400">289</span>,
+    <span class="text-cyan-300">"engines_used"</span>: [<span class="text-yellow-300">"google images"</span>, <span class="text-yellow-300">"bing images"</span>]
+  }
+}</code></pre>
+      </section>
+
+      <!-- /v1/suggest -->
+      <section id="suggest" class="mb-16">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="method-get text-xs font-bold px-2.5 py-1 rounded">GET</span>
+          <h2 class="text-2xl font-bold text-white">/v1/suggest</h2>
+        </div>
+        <p class="text-gray-400 mb-6">Autocomplete suggestions for a partial query. Fast, cached aggressively.</p>
+
+        <h3 class="text-white font-semibold mb-3">Parameters</h3>
+        <div class="overflow-x-auto mb-6">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Param</th>
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Type</th>
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Required</th>
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Description</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-300">
+              <tr><td class="py-2 px-4 font-mono text-accent">q</td><td class="py-2 px-4">string</td><td class="py-2 px-4">Yes</td><td class="py-2 px-4">Partial query for autocomplete</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="text-white font-semibold mb-3">Example Request</h3>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">curl <span class="text-yellow-300">"https://api.searchclaw.dev/v1/suggest?q=kube"</span> \
+  -H <span class="text-yellow-300">"X-API-Key: sc_live_xxxxxxxxxx"</span></code></pre>
+
+        <h3 class="text-white font-semibold mb-3">Example Response</h3>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto"><code class="text-gray-300">[
+  <span class="text-yellow-300">"kubernetes"</span>,
+  <span class="text-yellow-300">"kubernetes tutorial"</span>,
+  <span class="text-yellow-300">"kubernetes vs docker"</span>,
+  <span class="text-yellow-300">"kubernetes pods"</span>,
+  <span class="text-yellow-300">"kubelet"</span>
+]</code></pre>
+      </section>
+
+      <!-- /v1/usage -->
+      <section id="usage" class="mb-16">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="method-get text-xs font-bold px-2.5 py-1 rounded">GET</span>
+          <h2 class="text-2xl font-bold text-white">/v1/usage</h2>
+        </div>
+        <p class="text-gray-400 mb-6">Check your current billing period usage, remaining credits, and plan information.</p>
+
+        <h3 class="text-white font-semibold mb-3">Example Request</h3>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">curl <span class="text-yellow-300">"https://api.searchclaw.dev/v1/usage"</span> \
+  -H <span class="text-yellow-300">"X-API-Key: sc_live_xxxxxxxxxx"</span></code></pre>
+
+        <h3 class="text-white font-semibold mb-3">Example Response</h3>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto"><code class="text-gray-300">{
+  <span class="text-cyan-300">"plan"</span>: <span class="text-yellow-300">"pro"</span>,
+  <span class="text-cyan-300">"billing_period"</span>: {
+    <span class="text-cyan-300">"start"</span>: <span class="text-yellow-300">"2026-03-01T00:00:00Z"</span>,
+    <span class="text-cyan-300">"end"</span>: <span class="text-yellow-300">"2026-03-31T23:59:59Z"</span>
+  },
+  <span class="text-cyan-300">"credits"</span>: {
+    <span class="text-cyan-300">"total"</span>: <span class="text-purple-400">100000</span>,
+    <span class="text-cyan-300">"used"</span>: <span class="text-purple-400">14523</span>,
+    <span class="text-cyan-300">"remaining"</span>: <span class="text-purple-400">85477</span>
+  },
+  <span class="text-cyan-300">"rate_limit"</span>: {
+    <span class="text-cyan-300">"requests_per_second"</span>: <span class="text-purple-400">20</span>
+  },
+  <span class="text-cyan-300">"usage_today"</span>: {
+    <span class="text-cyan-300">"queries"</span>: <span class="text-purple-400">342</span>,
+    <span class="text-cyan-300">"cache_hit_rate"</span>: <span class="text-purple-400">0.64</span>
+  }
+}</code></pre>
+      </section>
+
+      <!-- Response Headers -->
+      <section id="response-headers" class="mb-16">
+        <h2 class="text-2xl font-bold text-white mb-4">Response Headers</h2>
+        <p class="text-gray-400 mb-4">Every API response includes these headers:</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Header</th>
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Description</th>
+                <th class="text-left py-3 px-4 text-gray-400 font-medium">Example</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-300">
+              <tr class="border-b border-white/5"><td class="py-2 px-4 font-mono text-sm">X-RateLimit-Limit</td><td class="py-2 px-4">Max requests per second</td><td class="py-2 px-4"><code>20</code></td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-4 font-mono text-sm">X-RateLimit-Remaining</td><td class="py-2 px-4">Remaining requests in window</td><td class="py-2 px-4"><code>17</code></td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-4 font-mono text-sm">X-RateLimit-Reset</td><td class="py-2 px-4">Unix timestamp when limit resets</td><td class="py-2 px-4"><code>1709571600</code></td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-4 font-mono text-sm">X-Credits-Used</td><td class="py-2 px-4">Credits consumed by this request</td><td class="py-2 px-4"><code>1</code></td></tr>
+              <tr><td class="py-2 px-4 font-mono text-sm">X-Credits-Remaining</td><td class="py-2 px-4">Credits left in billing period</td><td class="py-2 px-4"><code>14523</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SDKs -->
+      <section id="sdks" class="mb-16">
+        <h2 class="text-2xl font-bold text-white mb-4">SDKs</h2>
+        <p class="text-gray-400 mb-6">Official client libraries for quick integration.</p>
+
+        <h3 class="text-white font-semibold mb-3">Python</h3>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">pip install searchclaw
+
+<span class="text-purple-400">from</span> searchclaw <span class="text-purple-400">import</span> SearchClaw
+client = SearchClaw(api_key=<span class="text-yellow-300">"sc_live_xxxxxxxxxx"</span>)
+results = client.search(<span class="text-yellow-300">"your query"</span>)</code></pre>
+
+        <h3 class="text-white font-semibold mb-3">Node.js</h3>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto"><code class="text-gray-300">npm install searchclaw
+
+<span class="text-purple-400">import</span> { SearchClaw } <span class="text-purple-400">from</span> <span class="text-yellow-300">'searchclaw'</span>;
+<span class="text-purple-400">const</span> client = <span class="text-purple-400">new</span> SearchClaw({ apiKey: <span class="text-yellow-300">'sc_live_xxxxxxxxxx'</span> });
+<span class="text-purple-400">const</span> results = <span class="text-purple-400">await</span> client.search(<span class="text-yellow-300">'your query'</span>);</code></pre>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Sidebar active link tracker -->
+  <script>
+    const sections = document.querySelectorAll('section[id]');
+    const links = document.querySelectorAll('.sidebar-link');
+
+    function updateActive() {
+      let current = '';
+      sections.forEach(section => {
+        const top = section.offsetTop - 100;
+        if (window.scrollY >= top) current = section.id;
+      });
+      links.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+      });
+    }
+    window.addEventListener('scroll', updateActive);
+    updateActive();
+  </script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: searxng
+  namespace: searchclaw
+  labels:
+    app: searxng
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: searxng
+  template:
+    metadata:
+      labels:
+        app: searxng
+    spec:
+      containers:
+        - name: searxng
+          image: searxng/searxng:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SEARXNG_BASE_URL
+              value: "http://searxng:8080"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: settings
+              mountPath: /etc/searxng/settings.yml
+              subPath: settings.yml
+              readOnly: true
+      volumes:
+        - name: settings
+          configMap:
+            name: searxng-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: searxng
+  namespace: searchclaw
+spec:
+  selector:
+    app: searxng
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: searxng-config
+  namespace: searchclaw
+data:
+  settings.yml: |
+    general:
+      instance_name: "SearchClaw Backend"
+      debug: false
+    search:
+      safe_search: 1
+      default_lang: "en"
+      formats:
+        - json
+    server:
+      secret_key: "changeme-generate-real-secret"
+      limiter: false
+      image_proxy: false
+      method: "GET"
+      port: 8080
+      bind_address: "0.0.0.0"
+    outgoing:
+      request_timeout: 5.0
+      max_request_timeout: 10.0
+    engines:
+      - name: google
+        engine: google
+        shortcut: g
+        disabled: false
+      - name: bing
+        engine: bing
+        shortcut: b
+        disabled: false
+      - name: duckduckgo
+        engine: duckduckgo
+        shortcut: ddg
+        disabled: false
+      - name: brave
+        engine: brave
+        shortcut: br
+        disabled: false
+      - name: wikipedia
+        engine: wikipedia
+        shortcut: wp
+        disabled: false

@@ -1,0 +1,17 @@
+use_default_settings: true
+
+general:
+  instance_name: "SearchClaw Backend"
+  debug: false
+
+search:
+  safe_search: 1
+  default_lang: "en"
+  formats:
+    - json
+    - html
+
+server:
+  secret_key: "changeme-generate-a-real-secret"
+  limiter: false
+  image_proxy: false

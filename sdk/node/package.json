@@ -1,0 +1,35 @@
+{
+  "name": "searchclaw",
+  "version": "0.1.0",
+  "description": "Node.js SDK for the SearchClaw search API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "search",
+    "api",
+    "web-search",
+    "ai",
+    "rag",
+    "searchclaw"
+  ],
+  "author": "SearchClaw <support@searchclaw.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/searchclaw/searchclaw-node"
+  },
+  "homepage": "https://searchclaw.dev",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}

@@ -1,0 +1,69 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: searchclaw
+
+resources:
+  - ../../base
+
+images:
+  - name: searchclaw/api
+    newName: ghcr.io/csteenkamp/searchclaw-api
+    newTag: latest
+
+patches:
+  - target:
+      kind: Deployment
+      name: api-gateway
+    patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: api-gateway
+      spec:
+        replicas: 3
+        template:
+          spec:
+            containers:
+              - name: api
+                resources:
+                  requests:
+                    cpu: 500m
+                    memory: 512Mi
+                  limits:
+                    cpu: "2"
+                    memory: 1Gi
+
+  - target:
+      kind: Deployment
+      name: searxng
+    patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: searxng
+      spec:
+        replicas: 8
+        template:
+          spec:
+            containers:
+              - name: searxng
+                resources:
+                  requests:
+                    cpu: 200m
+                    memory: 256Mi
+                  limits:
+                    cpu: "1"
+                    memory: 1Gi
+
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: api-gateway
+    patch: |
+      apiVersion: autoscaling/v2
+      kind: HorizontalPodAutoscaler
+      metadata:
+        name: api-gateway
+      spec:
+        minReplicas: 3
+        maxReplicas: 12

@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: searchclaw
+  namespace: argocd
+spec:
+  description: SearchClaw search API platform
+  sourceRepos:
+    - "https://github.com/CSteenkamp/searchclaw.git"
+  destinations:
+    - namespace: searchclaw
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: "*"
+    - group: apps
+      kind: "*"
+    - group: autoscaling
+      kind: "*"
+    - group: rbac.authorization.k8s.io
+      kind: "*"
