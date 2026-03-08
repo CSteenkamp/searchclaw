@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — SearchClaw</title>
+  <meta name="description" content="SearchClaw privacy policy: what data we collect, how we use it, and your rights.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#0f172a',
+            darker: '#0a1021',
+            card: '#1e293b',
+            accent: '#22d3ee',
+            accentHover: '#06b6d4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html { scroll-behavior: smooth; }
+    .gradient-text {
+      background: linear-gradient(135deg, #22d3ee 0%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
+</head>
+<body class="bg-dark text-gray-200 antialiased">
+
+  <!-- Nav -->
+  <nav class="fixed top-0 w-full bg-dark/80 backdrop-blur-md border-b border-white/5 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-white flex items-center gap-2">
+        <svg class="w-7 h-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+        SearchClaw
+      </a>
+      <div class="hidden md:flex items-center gap-8 text-sm">
+        <a href="docs.html" class="text-gray-400 hover:text-white transition">Docs</a>
+        <a href="dashboard.html" class="text-gray-400 hover:text-white transition">Dashboard</a>
+        <a href="security.html" class="text-gray-400 hover:text-white transition">Security</a>
+        <a href="privacy.html" class="text-white font-medium">Privacy</a>
+        <a href="terms.html" class="text-gray-400 hover:text-white transition">Terms</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main class="pt-28 pb-20 px-6">
+    <div class="max-w-3xl mx-auto">
+      <h1 class="text-4xl font-extrabold text-white mb-2">Privacy Policy</h1>
+      <p class="text-gray-400 mb-10">Last updated: March 2026. How SearchClaw handles your data.</p>
+
+      <!-- Data We Collect -->
+      <section class="mb-10">
+        <h2 class="text-2xl font-bold text-white mb-4">Data We Collect</h2>
+        <div class="bg-card rounded-xl p-6 space-y-3">
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">Account information</strong> — Email address and name provided at registration. Passwords are hashed with bcrypt and never stored in plaintext.</div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">Usage metrics</strong> — Endpoint called, credits consumed, response times, and timestamps. Query content is <strong>not</strong> logged by default.</div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">Billing data</strong> — Payment processing is handled by Stripe. We store only your Stripe customer ID, not card details.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- How We Use Your Data -->
+      <section class="mb-10">
+        <h2 class="text-2xl font-bold text-white mb-4">How We Use Your Data</h2>
+        <div class="bg-card rounded-xl p-6 space-y-3">
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">Service delivery</strong> — Authenticating requests, enforcing rate limits, and tracking credit usage against your plan.</div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">Billing</strong> — Processing subscription payments and generating invoices via Stripe.</div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">Service improvement</strong> — Aggregated, anonymized usage metrics to improve reliability and performance. No individual query content is analysed.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Data Retention -->
+      <section class="mb-10">
+        <h2 class="text-2xl font-bold text-white mb-4">Data Retention</h2>
+        <div class="bg-card rounded-xl p-6 space-y-3">
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">Cache data</strong> — Redis cache entries auto-expire within 1–24 hours depending on content type.</div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">Usage records</strong> — Retained for 90 days for billing reconciliation, then aggregated and anonymized.</div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">Zero retention mode</strong> — Set <code class="bg-darker px-1 rounded text-accent">X-Data-Retention: none</code> to skip all caching and query logging per request.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Your Rights -->
+      <section class="mb-10">
+        <h2 class="text-2xl font-bold text-white mb-4">Your Rights</h2>
+        <div class="bg-card rounded-xl p-6 space-y-3">
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">Data export</strong> — Request a full export of your account data and usage history at any time.</div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">Data deletion</strong> — Request complete deletion of your account and all associated data. Processed within 30 days.</div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">GDPR compliance</strong> — EU residents have full rights under GDPR including access, rectification, portability, and erasure.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Third-Party Services -->
+      <section class="mb-10">
+        <h2 class="text-2xl font-bold text-white mb-4">Third-Party Services</h2>
+        <div class="bg-card rounded-xl p-6 space-y-3">
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">Stripe</strong> — Payment processing. Subject to <a href="https://stripe.com/privacy" class="text-accent hover:underline">Stripe's Privacy Policy</a>.</div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">Cloudflare</strong> — CDN and DDoS protection. Traffic is routed through Cloudflare tunnels.</div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-1">&#10003;</span>
+            <div><strong class="text-white">No data sharing</strong> — Scraped or extracted content is never shared with third parties or used for model training.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact -->
+      <section class="mb-10">
+        <h2 class="text-2xl font-bold text-white mb-4">Contact</h2>
+        <div class="bg-card rounded-xl p-6">
+          <p class="mb-3">For privacy-related questions or to exercise your data rights, contact us.</p>
+          <p>Email: <a href="mailto:privacy@searchclaw.dev" class="text-accent hover:underline">privacy@searchclaw.dev</a></p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/5 py-8 px-6 text-center text-gray-500 text-sm">
+    <p>&copy; 2026 SearchClaw. All rights reserved.</p>
+    <div class="mt-2 space-x-4">
+      <a href="security.html" class="hover:text-white transition">Security</a>
+      <a href="privacy.html" class="hover:text-white transition">Privacy</a>
+      <a href="terms.html" class="hover:text-white transition">Terms</a>
+    </div>
+  </footer>
+</body>
+</html>

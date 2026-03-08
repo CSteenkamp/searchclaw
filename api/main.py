@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 
 from api.config import get_settings
-from api.routers import search, health, billing, auth, extract, markdown, screenshot, crawl, jobs, pipeline, map as map_router_mod, browse, agent, orgs
+from api.routers import search, health, billing, auth, extract, markdown, screenshot, crawl, jobs, pipeline, map as map_router_mod, browse, agent, orgs, usage
 from api.middleware.metrics import setup_metrics
 
 tags_metadata = [
@@ -23,6 +23,7 @@ tags_metadata = [
     {"name": "Browse", "description": "Interactive browser actions — click, type, scroll, extract."},
     {"name": "Agent", "description": "Autonomous data gathering from natural language prompts."},
     {"name": "Orgs", "description": "Organisation/team account management."},
+    {"name": "Usage", "description": "Usage history, analytics, and CSV export."},
 ]
 
 
@@ -109,6 +110,7 @@ def create_app() -> FastAPI:
     app.include_router(browse.router, prefix="/v1")
     app.include_router(agent.router, prefix="/v1")
     app.include_router(orgs.router, prefix="/v1")
+    app.include_router(usage.router, prefix="/v1")
 
     # Prometheus metrics
     setup_metrics(app)
