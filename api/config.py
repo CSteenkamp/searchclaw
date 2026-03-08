@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     llm_model: str = "gpt-4o-mini"
     llm_fallback_model: str = "claude-3-haiku-20240307"
 
+    # Proxy (spec 7)
+    proxy_datacenter_url: str = ""
+    proxy_residential_url: str = ""
+    proxy_auto_escalate: bool = True  # Auto-retry with proxy on 403
+
     # Rate limiting
     global_rate_limit: int = 10  # per second per IP (unauthenticated)
     default_rate_limit: int = 1  # per second (free tier)

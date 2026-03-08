@@ -4,6 +4,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, HttpUrl
 
+ProxyTier = Literal["none", "datacenter", "residential"]
+
 
 class PaginationConfig(BaseModel):
     type: Literal["next_button", "url_pattern", "infinite_scroll"] = "next_button"
@@ -20,6 +22,9 @@ class CrawlRequest(BaseModel):
     pagination: PaginationConfig | None = None
     max_items: int = Field(100, ge=1, le=1000)
     timeout_ms: int = Field(60000, ge=1000, le=120000)
+    proxy: ProxyTier | None = None
+    webhook_url: str | None = Field(None, description="HTTPS URL to receive job results on completion")
+    webhook_secret: str | None = Field(None, description="Secret for HMAC-SHA256 signature verification")
 
     model_config = {"populate_by_name": True}
 
@@ -50,6 +55,7 @@ class MarkdownRequest(BaseModel):
     include_images: bool = True
     include_links: bool = True
     main_content_only: bool = True
+    proxy: ProxyTier | None = None
 
     model_config = {"populate_by_name": True}
 
@@ -68,6 +74,7 @@ class ScreenshotRequest(BaseModel):
     height: int = Field(720, ge=240, le=2160)
     full_page: bool = False
     quality: int = Field(80, ge=1, le=100)
+    proxy: ProxyTier | None = None
 
     model_config = {"populate_by_name": True}
 

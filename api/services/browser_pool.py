@@ -52,15 +52,18 @@ class BrowserPool:
             await self._available.put(ctx)
         logger.info("Browser pool started with %d contexts", self._pool_size)
 
-    async def _create_context(self, index: int) -> BrowserContext:
+    async def _create_context(self, index: int, proxy_url: str | None = None) -> BrowserContext:
         ua = USER_AGENTS[index % len(USER_AGENTS)]
         vp = VIEWPORTS[index % len(VIEWPORTS)]
-        ctx = await self._browser.new_context(
+        kwargs = dict(
             user_agent=ua,
             viewport=vp,
             locale=random.choice(["en-US", "en-GB", "en-AU"]),
             timezone_id=random.choice(["America/New_York", "Europe/London", "America/Los_Angeles"]),
         )
+        if proxy_url:
+            kwargs["proxy"] = {"server": proxy_url}
+        ctx = await self._browser.new_context(**kwargs)
         await ctx.add_init_script("""
             Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
         """)
@@ -91,8 +94,16 @@ class BrowserPool:
         url: str,
         wait_for: str = "networkidle",
         timeout_ms: int = 30000,
+        proxy_url: str | None = None,
     ) -> tuple[str, str | None]:
-        """Render a URL and return (html_content, page_title)."""
+        """Render a URL and return (html_content, page_title).
+
+        If proxy_url is provided, a temporary context with that proxy is used
+        instead of one from the pool.
+        """
+        if proxy_url:
+            return await self._render_with_proxy(url, wait_for, timeout_ms, proxy_url)
+
         page = await self.get_page()
         try:
             await page.goto(url, wait_until=wait_for, timeout=timeout_ms)
@@ -101,6 +112,25 @@ class BrowserPool:
             return html, title
         finally:
             await self.release_page(page)
+
+    async def _render_with_proxy(
+        self,
+        url: str,
+        wait_for: str,
+        timeout_ms: int,
+        proxy_url: str,
+    ) -> tuple[str, str | None]:
+        """Render a URL using a temporary proxy context."""
+        ctx = await self._create_context(random.randint(0, 100), proxy_url=proxy_url)
+        page = await ctx.new_page()
+        try:
+            await page.goto(url, wait_until=wait_for, timeout=timeout_ms)
+            html = await page.content()
+            title = await page.title()
+            return html, title
+        finally:
+            await page.close()
+            await ctx.close()
 
     @property
     def status(self) -> dict:

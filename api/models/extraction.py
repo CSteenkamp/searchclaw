@@ -12,6 +12,7 @@ class ExtractRequest(BaseModel):
     wait_for: Literal["networkidle", "domcontentloaded", "load"] = "networkidle"
     timeout_ms: int = Field(30000, ge=1000, le=60000)
     cache: bool = True
+    proxy: Literal["none", "datacenter", "residential"] | None = None
 
     model_config = {"populate_by_name": True}
 

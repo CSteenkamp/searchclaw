@@ -13,6 +13,7 @@ from api.middleware.rate_limit import check_rate_limit, reserve_credits, release
 from api.models.job import ScreenshotRequest, ScreenshotResponse
 from api.services.browser_pool import get_browser_pool
 from api.services.cache import get_cached, set_cached
+from api.services.proxy_manager import get_proxy_manager, resolve_proxy_tier
 
 router = APIRouter(tags=["Extract"])
 
@@ -71,8 +72,21 @@ async def screenshot_endpoint(
                 response.headers[k] = v
             return ScreenshotResponse(**cached)
 
+        # Resolve proxy
+        tier = resolve_proxy_tier(req.proxy, user_info["plan"])
+        proxy_url = None
+        pm = get_proxy_manager()
+        if pm and tier != "none":
+            proxy_cfg = pm.get_proxy(tier)
+            proxy_url = proxy_cfg.url if proxy_cfg else None
+
         # Render page and take screenshot
-        page = await pool.get_page()
+        if proxy_url:
+            import random
+            ctx = await pool._create_context(random.randint(0, 100), proxy_url=proxy_url)
+            page = await ctx.new_page()
+        else:
+            page = await pool.get_page()
         try:
             await page.set_viewport_size({"width": req.width, "height": req.height})
             await page.goto(url, wait_until="networkidle", timeout=30000)
@@ -83,10 +97,18 @@ async def screenshot_endpoint(
 
             img_bytes = await page.screenshot(**screenshot_opts)
         except Exception as e:
-            await pool.release_page(page)
+            if proxy_url:
+                await page.close()
+                await page.context.close()
+            else:
+                await pool.release_page(page)
             raise HTTPException(502, f"Failed to capture screenshot: {e}")
         finally:
-            await pool.release_page(page)
+            if proxy_url:
+                await page.close()
+                await page.context.close()
+            else:
+                await pool.release_page(page)
 
         img_b64 = base64.b64encode(img_bytes).decode()
 

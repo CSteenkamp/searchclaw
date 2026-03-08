@@ -39,6 +39,10 @@ async def lifespan(app: FastAPI):
     await init_db(settings.database_url)
     init_searxng_pool(settings.searxng_urls)
 
+    # Proxy manager init (spec 7)
+    from api.services.proxy_manager import init_proxy_manager
+    init_proxy_manager()
+
     # Browser pool init (spec 2)
     from api.services.browser_pool import init_browser_pool, close_browser_pool
     try:
@@ -86,7 +90,7 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["X-API-Key", "Authorization", "Content-Type"],
+        allow_headers=["X-API-Key", "Authorization", "Content-Type", "X-Data-Retention"],
     )
 
     # Routers

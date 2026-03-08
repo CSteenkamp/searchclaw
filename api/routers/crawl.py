@@ -9,6 +9,7 @@ from api.middleware.auth import get_api_key_user
 from api.middleware.rate_limit import check_rate_limit, reserve_credits
 from api.models.job import CrawlRequest, CrawlResponse
 from api.services.cache import get_redis_client
+from api.services.proxy_manager import get_proxy_manager, resolve_proxy_tier
 
 router = APIRouter(tags=["Crawl"])
 
@@ -39,11 +40,24 @@ async def crawl_endpoint(
     # Store initial job status in Redis
     redis_client = get_redis_client()
     if redis_client:
+        job_data = {"status": "queued", "pages_crawled": 0, "items_extracted": 0}
+        if req.webhook_url:
+            job_data["webhook_url"] = req.webhook_url
+            if req.webhook_secret:
+                job_data["webhook_secret"] = req.webhook_secret
         await redis_client.set(
             f"job:{job_id}:status",
-            json.dumps({"status": "queued", "pages_crawled": 0, "items_extracted": 0}),
+            json.dumps(job_data),
             ex=3600,
         )
+
+    # Resolve proxy tier for the crawl job
+    tier = resolve_proxy_tier(req.proxy, user_info["plan"])
+    proxy_url = None
+    pm = get_proxy_manager()
+    if pm and tier != "none":
+        proxy_cfg = pm.get_proxy(tier)
+        proxy_url = proxy_cfg.url if proxy_cfg else None
 
     # Dispatch Celery task
     crawl_and_extract.delay(
@@ -55,6 +69,9 @@ async def crawl_endpoint(
         pagination=req.pagination.model_dump() if req.pagination else None,
         max_items=req.max_items,
         timeout_ms=req.timeout_ms,
+        proxy_url=proxy_url,
+        webhook_url=req.webhook_url,
+        webhook_secret=req.webhook_secret,
     )
 
     return CrawlResponse(

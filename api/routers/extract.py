@@ -15,6 +15,7 @@ from api.services.browser_pool import get_browser_pool
 from api.services.cache import get_cached, set_cached
 from api.services.extractor import extract
 from api.services.html_cleaner import clean_html, html_to_text
+from api.services.proxy_manager import get_proxy_manager, resolve_proxy_tier
 
 router = APIRouter(tags=["Extract"])
 
@@ -76,10 +77,22 @@ async def extract_endpoint(
                     response.headers[k] = v
                 return ExtractResponse(**cached)
 
+        # Resolve proxy
+        tier = resolve_proxy_tier(req.proxy, user_info["plan"])
+        proxy_url = None
+        pm = get_proxy_manager()
+        if pm and tier != "none":
+            proxy_cfg = pm.get_proxy(tier)
+            proxy_url = proxy_cfg.url if proxy_cfg else None
+            if tier == "residential":
+                credits += 1
+                await reserve_credits(user_info, credits=1)
+
         # Render page
         try:
             raw_html, page_title = await pool.render_url(
-                url, wait_for=req.wait_for, timeout_ms=req.timeout_ms
+                url, wait_for=req.wait_for, timeout_ms=req.timeout_ms,
+                proxy_url=proxy_url,
             )
         except Exception as e:
             raise HTTPException(502, f"Failed to render page: {e}")

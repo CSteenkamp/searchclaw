@@ -13,6 +13,7 @@ from api.models.job import MarkdownRequest, MarkdownResponse
 from api.services.browser_pool import get_browser_pool
 from api.services.cache import get_cached, set_cached
 from api.services.html_cleaner import clean_html
+from api.services.proxy_manager import get_proxy_manager, resolve_proxy_tier
 
 router = APIRouter(tags=["Extract"])
 
@@ -85,9 +86,17 @@ async def markdown_endpoint(
                 response.headers[k] = v
             return MarkdownResponse(**cached)
 
+        # Resolve proxy
+        tier = resolve_proxy_tier(req.proxy, user_info["plan"])
+        proxy_url = None
+        pm = get_proxy_manager()
+        if pm and tier != "none":
+            proxy_cfg = pm.get_proxy(tier)
+            proxy_url = proxy_cfg.url if proxy_cfg else None
+
         # Render page
         try:
-            raw_html, page_title = await pool.render_url(url)
+            raw_html, page_title = await pool.render_url(url, proxy_url=proxy_url)
         except Exception as e:
             raise HTTPException(502, f"Failed to render page: {e}")
 
