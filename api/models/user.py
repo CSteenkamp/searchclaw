@@ -35,7 +35,7 @@ class APIKey(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    key_prefix = Column(String(20), nullable=False)  # dc_live_ or dc_test_
+    key_prefix = Column(String(20), nullable=False)  # sc_live_ or sc_test_
     key_hash = Column(String(255), nullable=False, unique=True, index=True)
     name = Column(String(255), default="Default")
     is_active = Column(Boolean, default=True)
@@ -48,7 +48,7 @@ class APIKey(Base):
     def generate_key() -> tuple[str, str]:
         """Generate a new API key. Returns (full_key, prefix)."""
         raw = secrets.token_hex(24)
-        prefix = "dc_live_"
+        prefix = "sc_live_"
         full_key = f"{prefix}{raw}"
         return full_key, prefix
 

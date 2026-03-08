@@ -52,7 +52,7 @@ async def test_valid_dc_prefix_but_not_found(client, mock_redis):
         resp = await client.get(
             "/v1/search",
             params={"q": "test"},
-            headers={"X-API-Key": "dc_live_deadbeef1234567890abcdef"},
+            headers={"X-API-Key": "sc_live_deadbeef1234567890abcdef"},
         )
         assert resp.status_code == 401
 
@@ -62,7 +62,7 @@ def test_hash_key_is_hmac():
     import hashlib
     from api.middleware.auth import hash_key
 
-    key = "dc_live_test123"
+    key = "sc_live_test123"
     hashed = hash_key(key)
 
     # Should NOT equal bare SHA256
@@ -73,4 +73,4 @@ def test_hash_key_is_hmac():
     assert hash_key(key) == hash_key(key)
 
     # Different keys should produce different hashes
-    assert hash_key("dc_live_aaa") != hash_key("dc_live_bbb")
+    assert hash_key("sc_live_aaa") != hash_key("sc_live_bbb")

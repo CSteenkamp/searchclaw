@@ -39,7 +39,7 @@ def create_stripe_customer(email: str, name: str = "") -> str:
     customer = stripe.Customer.create(
         email=email,
         name=name or email,
-        metadata={"source": "dataclaw"},
+        metadata={"source": "searchclaw"},
     )
     return customer.id
 

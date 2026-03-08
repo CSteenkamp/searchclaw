@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: worker
-  namespace: dataclaw
+  namespace: searchclaw
   labels:
     app: worker
 spec:
@@ -17,13 +17,13 @@ spec:
     spec:
       containers:
         - name: worker
-          image: dataclaw/worker:latest
+          image: searchclaw/worker:latest
           command: ["celery", "-A", "api.workers.crawl_worker", "worker", "--loglevel=info", "--concurrency=2"]
           envFrom:
             - secretRef:
-                name: dataclaw-secrets
+                name: searchclaw-secrets
             - configMapRef:
-                name: dataclaw-config
+                name: searchclaw-config
           resources:
             requests:
               cpu: 500m

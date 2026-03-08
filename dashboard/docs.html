@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Documentation — DataClaw</title>
-  <meta name="description" content="Complete API documentation for DataClaw web search API.">
+  <title>API Documentation — SearchClaw</title>
+  <meta name="description" content="Complete API documentation for SearchClaw web search API.">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -40,7 +40,7 @@
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
       <a href="index.html" class="text-xl font-bold text-white flex items-center gap-2">
         <svg class="w-7 h-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-        DataClaw
+        SearchClaw
       </a>
       <div class="hidden md:flex items-center gap-8 text-sm">
         <a href="index.html" class="text-gray-400 hover:text-white transition">Home</a>
@@ -77,18 +77,18 @@
     <main class="flex-1 lg:ml-64 px-6 md:px-12 py-12 max-w-4xl">
 
       <h1 class="text-4xl font-bold text-white mb-2">API Documentation</h1>
-      <p class="text-gray-400 mb-12">Everything you need to integrate DataClaw into your application.</p>
+      <p class="text-gray-400 mb-12">Everything you need to integrate SearchClaw into your application.</p>
 
       <!-- Authentication -->
       <section id="authentication" class="mb-16">
         <h2 class="text-2xl font-bold text-white mb-4">Authentication</h2>
         <p class="text-gray-400 mb-4">Every request requires an API key. Pass it via the <code class="text-accent bg-accent/10 px-1.5 py-0.5 rounded text-sm">X-API-Key</code> header or as a Bearer token.</p>
         <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-4"><code class="text-gray-300"><span class="text-gray-500"># Option 1: X-API-Key header</span>
-curl https://api.dataclaw.dev/v1/search?q=hello \
+curl https://api.searchclaw.dev/v1/search?q=hello \
   -H <span class="text-yellow-300">"X-API-Key: sc_live_xxxxxxxxxxxxxxxxxx"</span>
 
 <span class="text-gray-500"># Option 2: Bearer token</span>
-curl https://api.dataclaw.dev/v1/search?q=hello \
+curl https://api.searchclaw.dev/v1/search?q=hello \
   -H <span class="text-yellow-300">"Authorization: Bearer sc_live_xxxxxxxxxxxxxxxxxx"</span></code></pre>
         <div class="bg-card rounded-lg p-4 border border-white/5">
           <p class="text-sm text-gray-400"><strong class="text-white">Key prefixes:</strong> Production keys start with <code class="text-accent">sc_live_</code> and sandbox keys start with <code class="text-accent">sc_test_</code>. Sandbox keys return mock data and are not metered.</p>
@@ -98,7 +98,7 @@ curl https://api.dataclaw.dev/v1/search?q=hello \
       <!-- Base URL -->
       <section id="base-url" class="mb-16">
         <h2 class="text-2xl font-bold text-white mb-4">Base URL</h2>
-        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto"><code class="text-gray-300">https://api.dataclaw.dev/v1</code></pre>
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto"><code class="text-gray-300">https://api.searchclaw.dev/v1</code></pre>
         <p class="text-gray-400 mt-4 text-sm">All endpoints are relative to this base URL. HTTPS is required.</p>
       </section>
 
@@ -199,7 +199,7 @@ curl https://api.dataclaw.dev/v1/search?q=hello \
         </div>
 
         <h3 class="text-white font-semibold mb-3">Example Request</h3>
-        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">curl <span class="text-yellow-300">"https://api.dataclaw.dev/v1/search?q=kubernetes+tutorial&count=5"</span> \
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">curl <span class="text-yellow-300">"https://api.searchclaw.dev/v1/search?q=kubernetes+tutorial&count=5"</span> \
   -H <span class="text-yellow-300">"X-API-Key: sc_live_xxxxxxxxxx"</span></code></pre>
 
         <h3 class="text-white font-semibold mb-3">Example Response</h3>
@@ -244,7 +244,7 @@ curl https://api.dataclaw.dev/v1/search?q=hello \
         <p class="text-gray-400 text-sm mb-4">Same parameters as <code class="text-accent">/v1/search</code>.</p>
 
         <h3 class="text-white font-semibold mb-3">Example Request</h3>
-        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">curl <span class="text-yellow-300">"https://api.dataclaw.dev/v1/search/ai?q=kubernetes+pod+restart+policy"</span> \
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">curl <span class="text-yellow-300">"https://api.searchclaw.dev/v1/search/ai?q=kubernetes+pod+restart+policy"</span> \
   -H <span class="text-yellow-300">"X-API-Key: sc_live_xxxxxxxxxx"</span></code></pre>
 
         <h3 class="text-white font-semibold mb-3">Example Response</h3>
@@ -362,7 +362,7 @@ curl https://api.dataclaw.dev/v1/search?q=hello \
         </div>
 
         <h3 class="text-white font-semibold mb-3">Example Request</h3>
-        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">curl <span class="text-yellow-300">"https://api.dataclaw.dev/v1/suggest?q=kube"</span> \
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">curl <span class="text-yellow-300">"https://api.searchclaw.dev/v1/suggest?q=kube"</span> \
   -H <span class="text-yellow-300">"X-API-Key: sc_live_xxxxxxxxxx"</span></code></pre>
 
         <h3 class="text-white font-semibold mb-3">Example Response</h3>
@@ -384,7 +384,7 @@ curl https://api.dataclaw.dev/v1/search?q=hello \
         <p class="text-gray-400 mb-6">Check your current billing period usage, remaining credits, and plan information.</p>
 
         <h3 class="text-white font-semibold mb-3">Example Request</h3>
-        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">curl <span class="text-yellow-300">"https://api.dataclaw.dev/v1/usage"</span> \
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">curl <span class="text-yellow-300">"https://api.searchclaw.dev/v1/usage"</span> \
   -H <span class="text-yellow-300">"X-API-Key: sc_live_xxxxxxxxxx"</span></code></pre>
 
         <h3 class="text-white font-semibold mb-3">Example Response</h3>
@@ -439,17 +439,17 @@ curl https://api.dataclaw.dev/v1/search?q=hello \
         <p class="text-gray-400 mb-6">Official client libraries for quick integration.</p>
 
         <h3 class="text-white font-semibold mb-3">Python</h3>
-        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">pip install dataclaw
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto mb-6"><code class="text-gray-300">pip install searchclaw
 
-<span class="text-purple-400">from</span> dataclaw <span class="text-purple-400">import</span> DataClaw
-client = DataClaw(api_key=<span class="text-yellow-300">"sc_live_xxxxxxxxxx"</span>)
+<span class="text-purple-400">from</span> searchclaw <span class="text-purple-400">import</span> SearchClaw
+client = SearchClaw(api_key=<span class="text-yellow-300">"sc_live_xxxxxxxxxx"</span>)
 results = client.search(<span class="text-yellow-300">"your query"</span>)</code></pre>
 
         <h3 class="text-white font-semibold mb-3">Node.js</h3>
-        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto"><code class="text-gray-300">npm install dataclaw
+        <pre class="bg-[#0d1117] rounded-xl p-5 border border-white/5 overflow-x-auto"><code class="text-gray-300">npm install searchclaw
 
-<span class="text-purple-400">import</span> { DataClaw } <span class="text-purple-400">from</span> <span class="text-yellow-300">'dataclaw'</span>;
-<span class="text-purple-400">const</span> client = <span class="text-purple-400">new</span> DataClaw({ apiKey: <span class="text-yellow-300">'sc_live_xxxxxxxxxx'</span> });
+<span class="text-purple-400">import</span> { SearchClaw } <span class="text-purple-400">from</span> <span class="text-yellow-300">'searchclaw'</span>;
+<span class="text-purple-400">const</span> client = <span class="text-purple-400">new</span> SearchClaw({ apiKey: <span class="text-yellow-300">'sc_live_xxxxxxxxxx'</span> });
 <span class="text-purple-400">const</span> results = <span class="text-purple-400">await</span> client.search(<span class="text-yellow-300">'your query'</span>);</code></pre>
       </section>
 

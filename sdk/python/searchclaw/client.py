@@ -1,4 +1,4 @@
-"""DataClaw API client — Search, Extract, Crawl, Pipeline."""
+"""SearchClaw API client — Search, Extract, Crawl, Pipeline."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from typing import Any, Optional
 import httpx
 
 
-class DataClawError(Exception):
-    """Base exception for DataClaw API errors."""
+class SearchClawError(Exception):
+    """Base exception for SearchClaw API errors."""
 
     def __init__(self, message: str, status_code: Optional[int] = None, response: Optional[dict[str, Any]] = None):
         super().__init__(message)
@@ -16,11 +16,11 @@ class DataClawError(Exception):
         self.response = response
 
 
-class AuthError(DataClawError):
+class AuthError(SearchClawError):
     """Raised when authentication fails (401/403)."""
 
 
-class RateLimitError(DataClawError):
+class RateLimitError(SearchClawError):
     """Raised when rate limit is exceeded (429)."""
 
     def __init__(self, message: str, retry_after: Optional[int] = None, **kwargs: Any):
@@ -28,7 +28,7 @@ class RateLimitError(DataClawError):
         self.retry_after = retry_after
 
 
-_DEFAULT_BASE_URL = "https://api.dataclaw.dev/v1"
+_DEFAULT_BASE_URL = "https://api.searchclaw.dev/v1"
 _DEFAULT_TIMEOUT = 30.0
 
 
@@ -51,11 +51,11 @@ def _handle_error(response: httpx.Response) -> None:
             response=body,
             retry_after=int(retry_after) if retry_after else None,
         )
-    raise DataClawError(message, status_code=response.status_code, response=body)
+    raise SearchClawError(message, status_code=response.status_code, response=body)
 
 
-class DataClaw:
-    """Synchronous DataClaw API client."""
+class SearchClaw:
+    """Synchronous SearchClaw API client."""
 
     def __init__(
         self,
@@ -172,7 +172,7 @@ class DataClaw:
             if result.get("status") in ("completed", "failed"):
                 return result
             time.sleep(poll_interval)
-        raise DataClawError("Job timed out", status_code=None)
+        raise SearchClawError("Job timed out", status_code=None)
 
     # --- Pipeline ---
 
@@ -207,7 +207,7 @@ class DataClaw:
     def close(self) -> None:
         self._client.close()
 
-    def __enter__(self) -> DataClaw:
+    def __enter__(self) -> SearchClaw:
         return self
 
     def __exit__(self, *args: Any) -> None:
@@ -218,8 +218,8 @@ class DataClaw:
         return {k: v for k, v in kwargs.items() if v is not None}
 
 
-class AsyncDataClaw:
-    """Asynchronous DataClaw API client."""
+class AsyncSearchClaw:
+    """Asynchronous SearchClaw API client."""
 
     def __init__(
         self,
@@ -326,7 +326,7 @@ class AsyncDataClaw:
             if result.get("status") in ("completed", "failed"):
                 return result
             await asyncio.sleep(poll_interval)
-        raise DataClawError("Job timed out", status_code=None)
+        raise SearchClawError("Job timed out", status_code=None)
 
     # --- Pipeline ---
 
@@ -361,7 +361,7 @@ class AsyncDataClaw:
     async def close(self) -> None:
         await self._client.aclose()
 
-    async def __aenter__(self) -> AsyncDataClaw:
+    async def __aenter__(self) -> AsyncSearchClaw:
         return self
 
     async def __aexit__(self, *args: Any) -> None:

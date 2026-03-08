@@ -1,4 +1,4 @@
-"""DataClaw API — Search, Extract, Crawl — One API for AI agents."""
+"""SearchClaw API — Search, Extract, Crawl — One API for AI agents."""
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI

@@ -43,13 +43,13 @@ class TestK8sManifests:
         assert len(docs) > 0, f"{yaml_file} contains no valid YAML documents"
 
     def test_namespace_exists(self):
-        """Namespace manifest exists and sets dataclaw."""
+        """Namespace manifest exists and sets searchclaw."""
         ns_file = K8S_BASE / "base" / "namespace.yml"
         assert ns_file.exists(), "namespace.yml not found"
         docs = _load_all_yaml_docs(ns_file)
         ns = docs[0]
         assert ns["kind"] == "Namespace"
-        assert ns["metadata"]["name"] == "dataclaw"
+        assert ns["metadata"]["name"] == "searchclaw"
 
     def test_api_deployment_has_required_fields(self):
         """API deployment has required fields."""

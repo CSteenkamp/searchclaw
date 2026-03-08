@@ -1,22 +1,22 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: dataclaw-config
-  namespace: dataclaw
+  name: searchclaw-config
+  namespace: searchclaw
 data:
-  APP_NAME: DataClaw
+  APP_NAME: SearchClaw
   APP_VERSION: "0.1.0"
   DEBUG: "false"
   REDIS_URL: "redis://redis:6379/0"
-  DATABASE_URL: "postgresql+asyncpg://dataclaw:changeme-use-a-real-password@postgres:5432/dataclaw"
+  DATABASE_URL: "postgresql+asyncpg://searchclaw:changeme-use-a-real-password@postgres:5432/searchclaw"
   SEARXNG_URLS: '["http://searxng:8080"]'
   SEARXNG_TIMEOUT: "10.0"
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: dataclaw-secrets
-  namespace: dataclaw
+  name: searchclaw-secrets
+  namespace: searchclaw
 type: Opaque
 stringData:
   STRIPE_SECRET_KEY: ""

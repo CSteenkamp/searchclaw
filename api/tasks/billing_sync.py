@@ -13,7 +13,7 @@ settings = get_settings()
 
 # Celery app using Redis as broker
 celery_app = Celery(
-    "dataclaw",
+    "searchclaw",
     broker=settings.redis_url,
     backend=settings.redis_url,
 )

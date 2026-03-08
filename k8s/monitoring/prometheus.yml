@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-config
-  namespace: dataclaw
+  namespace: searchclaw
 data:
   prometheus.yml: |
     global:
@@ -16,7 +16,7 @@ data:
           - role: endpoints
             namespaces:
               names:
-                - dataclaw
+                - searchclaw
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_name]
             regex: api-gateway
@@ -32,7 +32,7 @@ data:
           - role: endpoints
             namespaces:
               names:
-                - dataclaw
+                - searchclaw
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_name]
             regex: searxng
@@ -52,7 +52,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: prometheus-data
-  namespace: dataclaw
+  namespace: searchclaw
 spec:
   accessModes:
     - ReadWriteOnce
@@ -65,7 +65,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus
-  namespace: dataclaw
+  namespace: searchclaw
   labels:
     app: prometheus
 spec:
@@ -127,7 +127,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: prometheus
-  namespace: dataclaw
+  namespace: searchclaw
   labels:
     app: prometheus
 spec:
@@ -144,7 +144,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: prometheus
-  namespace: dataclaw
+  namespace: searchclaw
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -168,4 +168,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: prometheus
-    namespace: dataclaw
+    namespace: searchclaw

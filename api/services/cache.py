@@ -32,11 +32,11 @@ async def ping_cache() -> bool:
 
 
 async def get_cached(key: str) -> Optional[dict]:
-    """Get a cached JSON response by key (dc: prefixed)."""
+    """Get a cached JSON response by key (sc: prefixed)."""
     if not _redis:
         return None
     try:
-        data = await _redis.get(f"dc:{key}")
+        data = await _redis.get(f"sc:{key}")
         if data:
             return json.loads(data)
     except Exception:
@@ -45,11 +45,11 @@ async def get_cached(key: str) -> Optional[dict]:
 
 
 async def set_cached(key: str, value: dict, ttl: int = 21600):
-    """Cache a JSON response with TTL (dc: prefixed)."""
+    """Cache a JSON response with TTL (sc: prefixed)."""
     if not _redis:
         return
     try:
-        await _redis.setex(f"dc:{key}", ttl, json.dumps(value))
+        await _redis.setex(f"sc:{key}", ttl, json.dumps(value))
     except Exception:
         pass
 

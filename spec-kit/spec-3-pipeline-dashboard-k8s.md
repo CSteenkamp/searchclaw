@@ -33,7 +33,7 @@ Read PROJECT-SPEC.md for full context. Specs 1-2 are built.
 
 ### 2. Unified Dashboard
 - `dashboard/index.html` — landing page
-  - DataClaw branding: "Search, Extract, Crawl — One API"
+  - SearchClaw branding: "Search, Extract, Crawl — One API"
   - Feature sections: Search, Extract, Crawl, Pipeline
   - Pricing table (free/starter/pro/scale)
   - Code examples showing the pipeline flow
@@ -60,32 +60,32 @@ Read PROJECT-SPEC.md for full context. Specs 1-2 are built.
 - Serve static files from FastAPI: `app.mount("/", StaticFiles(directory="dashboard"), name="dashboard")`
 
 ### 3. Python SDK
-- `sdk/python/dataclaw/__init__.py`
-- `sdk/python/dataclaw/client.py`
+- `sdk/python/searchclaw/__init__.py`
+- `sdk/python/searchclaw/client.py`
 - Unified client:
   ```python
-  from dataclaw import DataClaw
+  from searchclaw import SearchClaw
   
-  dc = DataClaw(api_key="dc_live_...")
+  sc = SearchClaw(api_key="sc_live_...")
   
   # Search
-  results = dc.search("best restaurants Cape Town")
+  results = sc.search("best restaurants Cape Town")
   
   # Extract
-  data = dc.extract("https://example.com", schema={"name": "str", "price": "float"})
+  data = sc.extract("https://example.com", schema={"name": "str", "price": "float"})
   
   # Crawl
-  job = dc.crawl("https://example.com/listings", schema={...}, max_pages=5)
-  result = dc.wait_for_job(job.id)
+  job = sc.crawl("https://example.com/listings", schema={...}, max_pages=5)
+  result = sc.wait_for_job(job.id)
   
   # Pipeline (search + extract in one call)
-  pipeline = dc.pipeline("best restaurants Cape Town", schema={"name": "str", "rating": "float"}, extract_from=5)
+  pipeline = sc.pipeline("best restaurants Cape Town", schema={"name": "str", "rating": "float"}, extract_from=5)
   ```
-- Async support via `DataClawAsync`
+- Async support via `SearchClawAsync`
 
 ### 4. Kubernetes Manifests
 - `k8s/base/` — Kustomize base
-  - `namespace.yaml` — dataclaw namespace
+  - `namespace.yaml` — searchclaw namespace
   - `api-deployment.yaml` — FastAPI (2 replicas, HPA)
   - `api-service.yaml` — ClusterIP
   - `api-hpa.yaml` — autoscale on CPU
@@ -105,7 +105,7 @@ Read PROJECT-SPEC.md for full context. Specs 1-2 are built.
 
 ### 5. ArgoCD
 - `argocd/application.yaml` — auto-sync, self-heal, prune
-- `argocd/project.yaml` — dataclaw project
+- `argocd/project.yaml` — searchclaw project
 
 ### 6. CI/CD
 - `.github/workflows/ci.yaml`:

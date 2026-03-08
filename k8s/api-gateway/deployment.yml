@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-gateway
-  namespace: dataclaw
+  namespace: searchclaw
   labels:
     app: api-gateway
 spec:
@@ -17,14 +17,14 @@ spec:
     spec:
       containers:
         - name: api
-          image: dataclaw/api:latest
+          image: searchclaw/api:latest
           ports:
             - containerPort: 8000
           envFrom:
             - secretRef:
-                name: dataclaw-secrets
+                name: searchclaw-secrets
             - configMapRef:
-                name: dataclaw-config
+                name: searchclaw-config
           resources:
             requests:
               cpu: 250m

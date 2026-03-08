@@ -1,4 +1,4 @@
-"""Shared test fixtures for DataClaw API tests."""
+"""Shared test fixtures for SearchClaw API tests."""
 
 import asyncio
 from contextlib import ExitStack
@@ -35,10 +35,10 @@ def mock_redis():
     counters = {}
 
     async def fake_get_cached(key):
-        return store.get(f"dc:{key}")
+        return store.get(f"sc:{key}")
 
     async def fake_set_cached(key, value, ttl=21600):
-        store[f"dc:{key}"] = value
+        store[f"sc:{key}"] = value
 
     async def fake_get_counter(key):
         return counters.get(key, 0)

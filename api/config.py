@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment."""
 
     # App
-    app_name: str = "DataClaw"
+    app_name: str = "SearchClaw"
     app_version: str = "0.1.0"
     debug: bool = False
 
@@ -16,10 +16,10 @@ class Settings(BaseSettings):
     api_key_hmac_secret: str = "change-me-in-production"
 
     # CORS
-    cors_origins: list[str] = ["https://dataclaw.dev", "https://searchclaw.dev", "http://localhost:3000"]
+    cors_origins: list[str] = ["https://searchclaw.dev", "http://localhost:3000"]
 
     # Database
-    database_url: str = "postgresql+asyncpg://dataclaw:dataclaw@localhost:5432/dataclaw"
+    database_url: str = "postgresql+asyncpg://searchclaw:searchclaw@localhost:5432/searchclaw"
 
     # Redis
     redis_url: str = "redis://localhost:6379/0"
@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     stripe_price_pro: str = ""  # Stripe Price ID for Pro plan
     stripe_price_scale: str = ""  # Stripe Price ID for Scale plan
     stripe_price_metered: str = ""  # Stripe Price ID for metered overage billing
-    stripe_meter_event_name: str = "dataclaw_query_usage"  # Stripe Meter event name
+    stripe_meter_event_name: str = "searchclaw_query_usage"  # Stripe Meter event name
 
     # Cloudflare
     cf_api_token: str = ""

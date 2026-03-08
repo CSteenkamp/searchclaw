@@ -1,4 +1,4 @@
-# DataClaw
+# SearchClaw
 
 **Search, Extract, Crawl — One API for AI Agents**
 
@@ -35,8 +35,8 @@ Internet → Cloudflare Tunnel (SSL, CDN, DDoS)
 
 ```bash
 # Clone and start services
-git clone https://github.com/dataclaw/dataclaw.git
-cd dataclaw
+git clone https://github.com/searchclaw/searchclaw.git
+cd searchclaw
 docker-compose up -d
 
 # API is available at http://localhost:8000
@@ -75,26 +75,26 @@ docker-compose up -d
 ### Python
 
 ```bash
-pip install dataclaw
+pip install searchclaw
 ```
 
 ```python
-from dataclaw import DataClaw
+from searchclaw import SearchClaw
 
-dc = DataClaw(api_key="dc_live_...")
+sc = SearchClaw(api_key="sc_live_...")
 
 # Search
-results = dc.search("best restaurants Cape Town")
+results = sc.search("best restaurants Cape Town")
 
 # Extract structured data
-data = dc.extract("https://example.com", schema={"name": "str", "price": "float"})
+data = sc.extract("https://example.com", schema={"name": "str", "price": "float"})
 
 # Crawl
-job = dc.crawl("https://example.com/listings", schema={"name": "str"}, max_pages=5)
-result = dc.wait_for_job(job["id"])
+job = sc.crawl("https://example.com/listings", schema={"name": "str"}, max_pages=5)
+result = sc.wait_for_job(job["id"])
 
 # Pipeline — search + extract in one call
-pipeline = dc.pipeline(
+pipeline = sc.pipeline(
     "best restaurants Cape Town",
     schema={"name": "str", "rating": "float", "address": "str"},
     extract_from=5,
@@ -106,10 +106,10 @@ for item in pipeline["results"]:
 ### Async
 
 ```python
-from dataclaw import AsyncDataClaw
+from searchclaw import AsyncSearchClaw
 
-async with AsyncDataClaw(api_key="dc_live_...") as dc:
-    results = await dc.pipeline(
+async with AsyncSearchClaw(api_key="sc_live_...") as sc:
+    results = await sc.pipeline(
         "AI startups San Francisco",
         schema={"name": "str", "funding": "str"},
         extract_from=3,

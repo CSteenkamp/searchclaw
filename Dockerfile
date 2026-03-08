@@ -25,7 +25,7 @@ COPY <<'EOF' /app/start.sh
 set -e
 echo "Running database migrations..."
 python -m alembic upgrade head
-echo "Starting DataClaw API server..."
+echo "Starting SearchClaw API server..."
 exec uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 4
 EOF
 RUN chmod +x /app/start.sh

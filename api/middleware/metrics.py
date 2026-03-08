@@ -1,4 +1,4 @@
-"""Prometheus metrics and raw ASGI middleware for DataClaw API."""
+"""Prometheus metrics and raw ASGI middleware for SearchClaw API."""
 
 import time
 
@@ -16,40 +16,40 @@ from starlette.responses import Response as StarletteResponse
 # --- Metrics ---
 
 REQUEST_COUNT = Counter(
-    "dataclaw_requests_total",
+    "searchclaw_requests_total",
     "Total API requests",
     ["endpoint", "status_code"],
 )
 
 RESPONSE_TIME = Histogram(
-    "dataclaw_response_time_seconds",
+    "searchclaw_response_time_seconds",
     "Response time in seconds",
     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
 )
 
 CACHE_HITS = Counter(
-    "dataclaw_cache_hits_total",
+    "searchclaw_cache_hits_total",
     "Total cache hits",
 )
 
 CACHE_REQUESTS = Counter(
-    "dataclaw_cache_requests_total",
+    "searchclaw_cache_requests_total",
     "Total cache-eligible requests",
 )
 
 SEARXNG_ERRORS = Counter(
-    "dataclaw_searxng_errors_total",
+    "searchclaw_searxng_errors_total",
     "Total SearXNG errors",
     ["instance", "engine"],
 )
 
 ACTIVE_USERS = Gauge(
-    "dataclaw_active_users",
+    "searchclaw_active_users",
     "Currently active unique users (API keys) in the last 5 minutes",
 )
 
 CREDITS_CONSUMED = Counter(
-    "dataclaw_credits_consumed_total",
+    "searchclaw_credits_consumed_total",
     "Total credits consumed",
 )
 

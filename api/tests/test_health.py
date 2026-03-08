@@ -21,7 +21,7 @@ async def test_root():
         resp = await client.get("/")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["name"] == "DataClaw"
+        assert data["name"] == "SearchClaw"
         assert "version" in data
 
 
@@ -31,4 +31,4 @@ async def test_metrics_endpoint():
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/metrics")
         assert resp.status_code == 200
-        assert "dataclaw_requests_total" in resp.text
+        assert "searchclaw_requests_total" in resp.text

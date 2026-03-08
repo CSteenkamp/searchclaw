@@ -37,8 +37,8 @@ async def create_checkout(
     """Create a Stripe Checkout session for subscribing to a paid plan."""
     body = await request.json()
     plan = body.get("plan", "").lower()
-    success_url = body.get("success_url", "https://dataclaw.dev/billing?success=1")
-    cancel_url = body.get("cancel_url", "https://dataclaw.dev/billing?cancelled=1")
+    success_url = body.get("success_url", "https://searchclaw.dev/billing?success=1")
+    cancel_url = body.get("cancel_url", "https://searchclaw.dev/billing?cancelled=1")
 
     if plan not in ("starter", "pro", "scale"):
         raise HTTPException(status_code=400, detail="Invalid plan. Choose starter, pro, or scale.")
@@ -82,7 +82,7 @@ async def customer_portal(
         if not user or not user.stripe_customer_id:
             raise HTTPException(status_code=400, detail="No billing account found. Subscribe to a plan first.")
 
-    return_url = "https://dataclaw.dev/billing"
+    return_url = "https://searchclaw.dev/billing"
     portal_url = billing_service.create_customer_portal_url(user.stripe_customer_id, return_url)
     return RedirectResponse(url=portal_url)
 

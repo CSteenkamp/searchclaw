@@ -1,10 +1,10 @@
-# DataClaw — Unified Search + Scrape API for AI Agents
+# SearchClaw — Unified Search + Scrape API for AI Agents
 
 ## Overview
 
 Merge SearchClaw (web search) and ScrapeClaw (structured extraction) into a single, unified API. One API key, one billing system, one dashboard. The complete pipeline: **search → extract → crawl**.
 
-**Companion products unified under one brand.** SearchClaw finds URLs, ScrapeClaw extracts structured data. DataClaw does both.
+**Companion products unified under one brand.** SearchClaw finds URLs, ScrapeClaw extracts structured data. SearchClaw does both.
 
 **Target customers:** AI agent builders, RAG pipelines, lead generation tools, price monitoring services, data enrichment platforms.
 
@@ -61,7 +61,7 @@ Plans:
 - scale: 500,000 credits/mo, 50 req/s — $200/mo
 - enterprise: unlimited, 100 req/s — custom
 
-API key prefix: `dc_live_` / `dc_test_`
+API key prefix: `sc_live_` / `sc_test_`
 
 ---
 
@@ -154,7 +154,7 @@ The unified codebase takes **SearchClaw as the base** (more mature auth, billing
 
 ## K8s Deployment
 
-Single namespace: `dataclaw`
+Single namespace: `searchclaw`
 
 Deployments:
 - `api` — FastAPI gateway (2-3 replicas, HPA)
@@ -190,9 +190,9 @@ services:
     image: postgres:16-alpine
     ports: ["5432:5432"]
     environment:
-      POSTGRES_DB: dataclaw
-      POSTGRES_USER: dataclaw
-      POSTGRES_PASSWORD: dataclaw
+      POSTGRES_DB: searchclaw
+      POSTGRES_USER: searchclaw
+      POSTGRES_PASSWORD: searchclaw
 ```
 
 ---
@@ -210,7 +210,7 @@ All existing tests from both projects must pass. New tests for:
 
 ## Branding
 
-- Name: **DataClaw**
-- Domain: dataclaw.dev (or keep searchclaw.dev and add scrape routes)
+- Name: **SearchClaw**
+- Domain: searchclaw.dev (or keep searchclaw.dev and add scrape routes)
 - Tagline: "Search, Extract, Crawl — One API"
-- API key prefix: `dc_live_` / `dc_test_`
+- API key prefix: `sc_live_` / `sc_test_`

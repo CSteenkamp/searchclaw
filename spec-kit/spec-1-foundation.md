@@ -8,18 +8,18 @@ Read PROJECT-SPEC.md for full context. This is a merge of two existing codebases
 
 ## What to Build
 
-Take SearchClaw as the foundation and create the unified DataClaw project.
+Take SearchClaw as the foundation and create the unified SearchClaw project.
 
 ### 1. Project Skeleton
 - Copy SearchClaw's full project structure as the starting point
-- Rename all references from "SearchClaw" to "DataClaw"
+- Rename all references from "SearchClaw" to "SearchClaw"
 - Update API key prefix from `sc_` to `dc_` in auth middleware and key generation
 - Update `api/config.py`:
-  - Rename app_name to "DataClaw"
+  - Rename app_name to "SearchClaw"
   - Add browser pool settings: `browser_pool_size: int = 3`, `browser_timeout: int = 30000`
   - Add LLM settings: `openai_api_key: str = ""`, `anthropic_api_key: str = ""`, `llm_model: str = "gpt-4o-mini"`, `llm_fallback_model: str = "claude-3-haiku-20240307"`
   - Add extraction cache TTL: `cache_ttl_extract: int = 3600`
-  - Update CORS origins to include dataclaw.dev
+  - Update CORS origins to include searchclaw.dev
 - Update `requirements.txt`: merge both projects' dependencies (keep SearchClaw's + add playwright, html2text, beautifulsoup4, lxml, openai, anthropic, celery[redis])
 - Create `Dockerfile` — multi-stage build for API
 - Create `Dockerfile.worker` — same base, runs Celery
@@ -40,7 +40,7 @@ Take SearchClaw as the foundation and create the unified DataClaw project.
   - `api/routers/auth.py` (register, login, key CRUD)
   - `api/routers/billing.py` (Stripe)
   - `api/models/user.py` (User, APIKey, UsageRecord, PLAN_LIMITS)
-- Update key prefix to `dc_live_` / `dc_test_`
+- Update key prefix to `sc_live_` / `sc_test_`
 - Keep all existing migrations, update naming
 
 ### 4. Health Endpoint
@@ -67,7 +67,7 @@ Take SearchClaw as the foundation and create the unified DataClaw project.
 ### 7. Git
 - Initialize repo, add .gitignore
 - Commit: `feat: spec 1 - unified foundation, search, auth (from SearchClaw base)`
-- Add remote: `git remote add origin https://github.com/CSteenkamp/dataclaw.git` (create if needed, or just commit locally)
+- Add remote: `git remote add origin https://github.com/CSteenkamp/searchclaw.git` (create if needed, or just commit locally)
 
 ## Constraints
 - Do NOT bring in ScrapeClaw code yet (that's spec 2)

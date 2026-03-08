@@ -4,15 +4,15 @@ Read PROJECT-SPEC.md for full context. Spec 1 is built (unified foundation with 
 
 ## Source Code Locations
 - ScrapeClaw extraction code: `/tmp/scrapeclaw/`
-- Current DataClaw (spec 1 built): `/tmp/dataclaw/`
+- Current SearchClaw (spec 1 built): `/tmp/searchclaw/`
 
 ## What to Build
 
-Integrate ScrapeClaw's extraction capabilities into the unified DataClaw gateway.
+Integrate ScrapeClaw's extraction capabilities into the unified SearchClaw gateway.
 
 ### 1. Browser Pool Service
 - Bring in from ScrapeClaw: `api/services/browser_pool.py`
-- Adapt to use DataClaw's `Settings` (browser_pool_size, browser_timeout)
+- Adapt to use SearchClaw's `Settings` (browser_pool_size, browser_timeout)
 - Initialize in `api/main.py` lifespan (startup: launch browsers, shutdown: close)
 - Expose pool status via health endpoint
 
@@ -21,7 +21,7 @@ Integrate ScrapeClaw's extraction capabilities into the unified DataClaw gateway
   - `api/services/extractor.py` — rule-based + LLM extraction pipeline
   - `api/services/html_cleaner.py` — HTML cleaning, readability
   - `api/services/llm_client.py` — GPT-4o-mini + Haiku fallback
-- Adapt LLM client to use DataClaw's config (openai_api_key, anthropic_api_key, llm_model, llm_fallback_model)
+- Adapt LLM client to use SearchClaw's config (openai_api_key, anthropic_api_key, llm_model, llm_fallback_model)
 - Wire cache through SearchClaw's existing `api/services/cache.py` (don't duplicate)
 
 ### 3. Extract Endpoint
