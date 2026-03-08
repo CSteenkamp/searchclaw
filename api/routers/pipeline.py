@@ -1,16 +1,20 @@
 """POST /v1/pipeline — search + extract in one call."""
 
 import asyncio
+import json
 import logging
 import time
-from typing import Any
+import uuid
+from typing import Any, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 
 from api.middleware.auth import get_api_key_user
 from api.middleware.rate_limit import check_rate_limit, reserve_credits, release_credits, record_usage_to_db
+from api.models.job import CrawlResponse
 from api.models.pipeline import PipelineRequest, PipelineResponse, PipelineResultItem, PipelineMeta
 from api.services.browser_pool import get_browser_pool
+from api.services.cache import get_redis_client
 from api.services.extractor import extract
 from api.services.html_cleaner import clean_html, html_to_text
 from api.services.searxng_client import execute_search
@@ -57,14 +61,54 @@ async def _extract_single_url(
         )
 
 
+async def _pipeline_async(req: PipelineRequest, user_info: dict) -> CrawlResponse:
+    """Dispatch pipeline as an async job with webhook delivery."""
+    from api.workers.crawl_worker import pipeline_async_task
+
+    total_credits = 1 + req.extract_from
+    await check_rate_limit(user_info)
+    await reserve_credits(user_info, credits=total_credits)
+
+    job_id = f"job_{uuid.uuid4().hex[:12]}"
+
+    redis_client = get_redis_client()
+    if redis_client:
+        job_data = {
+            "status": "queued",
+            "webhook_url": req.webhook_url,
+        }
+        if req.webhook_secret:
+            job_data["webhook_secret"] = req.webhook_secret
+        await redis_client.set(f"job:{job_id}:status", json.dumps(job_data), ex=3600)
+
+    pipeline_async_task.delay(
+        job_id=job_id,
+        query=req.query,
+        schema=req.schema_,
+        max_results=req.max_results,
+        extract_from=req.extract_from,
+        language=req.search_params.language,
+        timeout=req.timeout,
+        webhook_url=req.webhook_url,
+        webhook_secret=req.webhook_secret,
+    )
+
+    return CrawlResponse(
+        job_id=job_id,
+        status="processing",
+        poll_url=f"/v1/jobs/{job_id}",
+    )
+
+
 @router.post(
     "/pipeline",
-    response_model=PipelineResponse,
+    response_model=Union[PipelineResponse, CrawlResponse],
     summary="Search + Extract in one call",
     description="Search the web, then extract structured data from the top results. "
-    "Costs 1 credit for search + 1 credit per extraction.",
+    "Costs 1 credit for search + 1 credit per extraction. "
+    "If webhook_url is provided and extract_from > 3, runs asynchronously.",
     responses={
-        200: {"description": "Pipeline results"},
+        200: {"description": "Pipeline results (sync) or job created (async)"},
         402: {"description": "Insufficient credits"},
         503: {"description": "Browser pool not ready"},
     },
@@ -73,10 +117,14 @@ async def pipeline_endpoint(
     req: PipelineRequest,
     response: Response,
     user_info: dict = Depends(get_api_key_user),
-) -> PipelineResponse:
+) -> Union[PipelineResponse, CrawlResponse]:
     pool = get_browser_pool()
     if pool is None:
         raise HTTPException(503, "Browser pool not initialized")
+
+    # Async mode: webhook_url provided and extract_from > 3
+    if req.webhook_url and req.extract_from > 3:
+        return await _pipeline_async(req, user_info)
 
     # Total credits: 1 (search) + extract_from (extractions)
     total_credits = 1 + req.extract_from

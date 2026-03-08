@@ -45,6 +45,52 @@ def _get_results(job_id: str) -> list:
     return [json.loads(item) for item in raw]
 
 
+def _deliver_webhook_sync(job_id: str, payload: dict, webhook_url: str, webhook_secret: str | None, event: str):
+    """Deliver webhook from synchronous Celery worker context."""
+    import asyncio
+
+    from api.services.webhook import deliver_webhook
+
+    loop = asyncio.new_event_loop()
+    try:
+        result = loop.run_until_complete(
+            deliver_webhook(job_id, payload, webhook_url, webhook_secret, event)
+        )
+    finally:
+        loop.close()
+
+    # Update job record with delivery status
+    r = _get_redis()
+    raw = r.get(f"job:{job_id}:status")
+    if raw:
+        data = json.loads(raw)
+        data.update(result)
+        r.set(f"job:{job_id}:status", json.dumps(data), ex=3600)
+
+    return result
+
+
+def _build_job_payload(job_id: str, status_data: dict) -> dict:
+    """Build the webhook payload (same shape as GET /v1/jobs/{id})."""
+    all_results = _get_results(job_id)
+    return {
+        "job_id": job_id,
+        "status": status_data.get("status"),
+        "progress": {
+            "pages_crawled": status_data.get("pages_crawled", 0),
+            "total_pages": status_data.get("total_pages"),
+            "items_extracted": status_data.get("items_extracted", 0),
+        },
+        "data": all_results if all_results else None,
+        "error": status_data.get("error"),
+        "meta": {
+            k: status_data[k]
+            for k in ("duration_ms", "credits_used")
+            if k in status_data
+        } or None,
+    }
+
+
 @celery_app.task(name="crawl_and_extract", bind=True)
 def crawl_and_extract(
     self,
@@ -56,6 +102,9 @@ def crawl_and_extract(
     pagination: dict | None = None,
     max_items: int = 100,
     timeout_ms: int = 60000,
+    proxy_url: str | None = None,
+    webhook_url: str | None = None,
+    webhook_secret: str | None = None,
 ):
     """Crawl pages and extract data asynchronously."""
     import asyncio
@@ -86,17 +135,34 @@ def crawl_and_extract(
         all_results = _get_results(job_id)
         status = "completed" if result["pages_succeeded"] == result["pages_crawled"] else "partial"
 
-        _update_job_status(
-            job_id, status,
+        status_data = dict(
             pages_crawled=result["pages_crawled"], total_pages=max_pages,
             items_extracted=len(all_results), duration_ms=elapsed_ms,
             credits_used=result["pages_crawled"],
         )
+        _update_job_status(job_id, status, **status_data)
+
+        # Deliver webhook if configured
+        if webhook_url:
+            status_data["status"] = status
+            payload = _build_job_payload(job_id, status_data)
+            _deliver_webhook_sync(job_id, payload, webhook_url, webhook_secret, "job.completed")
+
         return {"status": status, "items": len(all_results)}
 
     except Exception as e:
         logger.exception("Crawl job %s failed", job_id)
         _update_job_status(job_id, "failed", error=str(e))
+
+        # Deliver failure webhook if configured
+        if webhook_url:
+            status_data = {"status": "failed", "error": str(e)}
+            payload = _build_job_payload(job_id, status_data)
+            try:
+                _deliver_webhook_sync(job_id, payload, webhook_url, webhook_secret, "job.failed")
+            except Exception:
+                logger.warning("Failed to deliver failure webhook for job %s", job_id)
+
         raise
 
 
@@ -164,6 +230,121 @@ async def _crawl_pages(
             await browser.close()
 
     return {"pages_crawled": pages_crawled, "pages_succeeded": pages_succeeded}
+
+
+@celery_app.task(name="pipeline_async", bind=True)
+def pipeline_async_task(
+    self,
+    job_id: str,
+    query: str,
+    schema: dict | None = None,
+    max_results: int = 10,
+    extract_from: int = 5,
+    language: str = "en",
+    timeout: int = 30,
+    webhook_url: str | None = None,
+    webhook_secret: str | None = None,
+):
+    """Run pipeline (search + extract) asynchronously with webhook delivery."""
+    import asyncio
+
+    start_time = time.monotonic()
+
+    _update_job_status(job_id, "processing", items_extracted=0)
+
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(
+                _run_pipeline(job_id, query, schema, max_results, extract_from, language, timeout)
+            )
+        finally:
+            loop.close()
+
+        elapsed_ms = int((time.monotonic() - start_time) * 1000)
+        status = "completed"
+
+        status_data = dict(
+            items_extracted=result["items_extracted"],
+            duration_ms=elapsed_ms,
+            credits_used=1 + result["extract_credits"],
+        )
+        _update_job_status(job_id, status, **status_data)
+
+        # Store pipeline results
+        if result["results"]:
+            _append_results(job_id, result["results"])
+
+        if webhook_url:
+            status_data["status"] = status
+            payload = _build_job_payload(job_id, status_data)
+            payload["query"] = query
+            _deliver_webhook_sync(job_id, payload, webhook_url, webhook_secret, "job.completed")
+
+        return {"status": status, "items": result["items_extracted"]}
+
+    except Exception as e:
+        logger.exception("Pipeline job %s failed", job_id)
+        _update_job_status(job_id, "failed", error=str(e))
+
+        if webhook_url:
+            status_data = {"status": "failed", "error": str(e)}
+            payload = _build_job_payload(job_id, status_data)
+            try:
+                _deliver_webhook_sync(job_id, payload, webhook_url, webhook_secret, "job.failed")
+            except Exception:
+                logger.warning("Failed to deliver failure webhook for pipeline job %s", job_id)
+
+        raise
+
+
+async def _run_pipeline(
+    job_id: str, query: str, schema: dict | None,
+    max_results: int, extract_from: int, language: str, timeout: int,
+) -> dict:
+    """Execute pipeline search + extract in async context."""
+    from api.services.searxng_client import execute_search
+    from api.services.browser_pool import get_browser_pool
+    from api.services.extractor import extract as run_extract
+    from api.services.html_cleaner import clean_html, html_to_text
+
+    search_results = await execute_search(
+        query=query, categories=["general"], count=max_results, language=language,
+    )
+
+    results_list = search_results.get("results", [])
+    urls_to_extract = results_list[:extract_from]
+
+    if not urls_to_extract:
+        return {"results": [], "items_extracted": 0, "extract_credits": 0}
+
+    pool = get_browser_pool()
+    if pool is None:
+        raise RuntimeError("Browser pool not initialized")
+
+    timeout_ms = timeout * 1000
+    extracted = []
+    extract_credits = 0
+
+    for r in urls_to_extract:
+        url = r["url"]
+        title = r.get("title", "")
+        try:
+            raw_html, page_title = await pool.render_url(url, wait_for="networkidle", timeout_ms=timeout_ms)
+            try:
+                result = await run_extract(raw_html, url, schema=schema)
+                extracted.append({"url": url, "title": page_title or title, "extracted_data": result.data})
+                extract_credits += 1
+            except RuntimeError:
+                cleaned = clean_html(raw_html)
+                text = html_to_text(cleaned)
+                extracted.append({"url": url, "title": page_title or title, "extracted_data": {"raw_text": text}})
+                extract_credits += 1
+        except Exception as e:
+            extracted.append({"url": url, "title": title, "extracted_data": None, "error": str(e)})
+
+    return {"results": extracted, "items_extracted": extract_credits, "extract_credits": extract_credits}
 
 
 async def _extract_from_page(

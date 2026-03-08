@@ -18,6 +18,8 @@ class PipelineRequest(BaseModel):
     extract_from: int = Field(5, ge=1, le=20)
     search_params: SearchParams = Field(default_factory=SearchParams)
     timeout: int = Field(30, ge=5, le=120)
+    webhook_url: Optional[str] = Field(None, description="HTTPS URL to receive results on completion")
+    webhook_secret: Optional[str] = Field(None, description="Secret for HMAC-SHA256 signature verification")
 
     model_config = {"populate_by_name": True}
 
