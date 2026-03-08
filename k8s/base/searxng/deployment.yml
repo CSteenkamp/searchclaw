@@ -6,7 +6,7 @@ metadata:
   labels:
     app: searxng
 spec:
-  replicas: 5
+  replicas: 2
   selector:
     matchLabels:
       app: searxng
@@ -60,6 +60,7 @@ metadata:
   namespace: searchclaw
 data:
   settings.yml: |
+    use_default_settings: true
     general:
       instance_name: "SearchClaw Backend"
       debug: false
@@ -90,7 +91,7 @@ data:
       - name: duckduckgo
         engine: duckduckgo
         shortcut: ddg
-        disabled: false
+        disabled: true
       - name: brave
         engine: brave
         shortcut: br

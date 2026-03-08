@@ -15,3 +15,15 @@ server:
   secret_key: "changeme-generate-a-real-secret"
   limiter: false
   image_proxy: false
+
+engines:
+  - name: duckduckgo
+    disabled: true
+  - name: duckduckgo images
+    disabled: true
+  - name: duckduckgo videos
+    disabled: true
+  - name: duckduckgo news
+    disabled: true
+  - name: duckduckgo weather
+    disabled: true
