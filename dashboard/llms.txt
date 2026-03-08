@@ -1,0 +1,31 @@
+# SearchClaw API
+> Search, Extract, Crawl — One API for AI agents.
+
+## Docs
+- [API Reference](https://api.searchclaw.dev/docs): Interactive API documentation
+- [OpenAPI Spec](https://api.searchclaw.dev/openapi.json): Machine-readable API spec
+
+## Endpoints
+- POST /v1/search: Web search via SearXNG (1 credit)
+- POST /v1/search/news: News search (1 credit)
+- POST /v1/search/images: Image search (1 credit)
+- GET /v1/suggest: Autocomplete suggestions (1 credit)
+- POST /v1/extract: Schema-driven structured extraction from URL (1 credit)
+- POST /v1/markdown: Convert URL to clean markdown (1 credit)
+- POST /v1/screenshot: Capture URL screenshot (1 credit)
+- POST /v1/crawl: Async bulk crawl + extraction (1 credit/page)
+- GET /v1/jobs/{id}: Poll async job status
+- POST /v1/pipeline: Search + extract in one call (1 + 1/page credits)
+- POST /v1/map: Discover all URLs on a domain (1 credit)
+
+## Auth
+- API key in header: `X-API-Key: sc_live_...`
+- Register: POST /v1/auth/register
+- Get key: POST /v1/auth/keys
+
+## Pricing
+- Free: 1,000 credits/mo
+- Starter: $10/mo — 15,000 credits
+- Pro: $50/mo — 100,000 credits
+- Scale: $200/mo — 500,000 credits
+- All endpoints: 1 credit each (crawl: 1/page)

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 
 from api.config import get_settings
-from api.routers import search, health, billing, auth, extract, markdown, screenshot, crawl, jobs, pipeline
+from api.routers import search, health, billing, auth, extract, markdown, screenshot, crawl, jobs, pipeline, map as map_router_mod, browse
 from api.middleware.metrics import setup_metrics
 
 tags_metadata = [
@@ -19,6 +19,9 @@ tags_metadata = [
     {"name": "Auth", "description": "API key management and registration."},
     {"name": "Billing", "description": "Subscription management and Stripe integration."},
     {"name": "Health", "description": "Liveness, readiness, and status probes."},
+    {"name": "Map", "description": "URL discovery via sitemap + BFS crawl."},
+    {"name": "Browse", "description": "Interactive browser actions — click, type, scroll, extract."},
+    {"name": "Agent", "description": "Autonomous data gathering from natural language prompts."},
 ]
 
 
@@ -97,17 +100,29 @@ def create_app() -> FastAPI:
     app.include_router(crawl.router, prefix="/v1")
     app.include_router(jobs.router, prefix="/v1")
     app.include_router(pipeline.router, prefix="/v1")
+    app.include_router(map_router_mod.router, prefix="/v1")
+    app.include_router(browse.router, prefix="/v1")
 
     # Prometheus metrics
     setup_metrics(app)
 
+    # llms.txt routes for AI agent discovery
+    _dashboard_dir = Path(__file__).resolve().parent.parent / "dashboard"
+
+    @app.get("/llms.txt", response_class=PlainTextResponse, include_in_schema=False)
+    async def serve_llms_txt():
+        """Serve llms.txt for AI agent discovery."""
+        return (_dashboard_dir / "llms.txt").read_text()
+
+    @app.get("/llms-full.txt", response_class=PlainTextResponse, include_in_schema=False)
+    async def serve_llms_full_txt():
+        """Serve expanded llms-full.txt for AI agent discovery."""
+        return (_dashboard_dir / "llms-full.txt").read_text()
+
     # Serve dashboard static files (must be last — catch-all mount)
-    import os
-    from pathlib import Path
-    dashboard_dir = Path(__file__).resolve().parent.parent / "dashboard"
-    if dashboard_dir.is_dir():
+    if _dashboard_dir.is_dir():
         from fastapi.staticfiles import StaticFiles
-        app.mount("/", StaticFiles(directory=str(dashboard_dir), html=True), name="dashboard")
+        app.mount("/", StaticFiles(directory=str(_dashboard_dir), html=True), name="dashboard")
 
     return app
 

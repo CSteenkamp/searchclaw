@@ -1,0 +1,327 @@
+# SearchClaw API — Full Reference
+> Search, Extract, Crawl — One API for AI agents.
+
+## Docs
+- [API Reference](https://api.searchclaw.dev/docs): Interactive API documentation
+- [OpenAPI Spec](https://api.searchclaw.dev/openapi.json): Machine-readable API spec
+
+---
+
+## POST /v1/search
+Web search via SearXNG. Returns ranked results from multiple engines.
+
+**Request:**
+```json
+{
+  "q": "string (required, 1-500 chars)",
+  "categories": ["general"],
+  "engines": ["google", "bing"],
+  "language": "en",
+  "region": "US",
+  "count": 10,
+  "offset": 0
+}
+```
+
+**Response:**
+```json
+{
+  "query": "string",
+  "results": [
+    {
+      "title": "string",
+      "url": "string",
+      "snippet": "string",
+      "source": "string",
+      "position": 1
+    }
+  ],
+  "infobox": null,
+  "suggestions": ["string"],
+  "meta": {
+    "total_results": 10,
+    "cached": false,
+    "response_time_ms": 150,
+    "engines_used": ["google", "bing"]
+  }
+}
+```
+
+**Cost:** 1 credit
+
+---
+
+## POST /v1/search/news
+News search. Same request/response format as /v1/search with category fixed to "news".
+
+**Cost:** 1 credit
+
+---
+
+## POST /v1/search/images
+Image search. Same request format as /v1/search with category fixed to "images".
+
+**Response results include:** `img_src`, `thumbnail`, `resolution` fields.
+
+**Cost:** 1 credit
+
+---
+
+## GET /v1/suggest
+Autocomplete suggestions for a query prefix.
+
+**Query params:** `q` (string, required)
+
+**Response:**
+```json
+{
+  "query": "string",
+  "suggestions": ["string"]
+}
+```
+
+**Cost:** 1 credit
+
+---
+
+## POST /v1/extract
+Schema-driven structured data extraction from a URL. Uses a 3-tier pipeline: rule-based → LLM → validation.
+
+**Request:**
+```json
+{
+  "url": "https://example.com (required)",
+  "schema": {"name": "string", "price": "number"},
+  "prompt": "optional extraction guidance",
+  "timeout_ms": 30000
+}
+```
+
+**Response:**
+```json
+{
+  "url": "string",
+  "data": {"name": "Example", "price": 9.99},
+  "meta": {
+    "extraction_method": "rule|llm|fallback",
+    "response_time_ms": 1200,
+    "cached": false
+  }
+}
+```
+
+**Cost:** 1 credit
+
+---
+
+## POST /v1/markdown
+Convert a URL to clean markdown text.
+
+**Request:**
+```json
+{
+  "url": "https://example.com (required)",
+  "include_images": true,
+  "include_links": true,
+  "main_content_only": true
+}
+```
+
+**Response:**
+```json
+{
+  "url": "string",
+  "title": "string",
+  "markdown": "# Page Title\n\nContent...",
+  "meta": {
+    "response_time_ms": 800,
+    "cached": false
+  }
+}
+```
+
+**Cost:** 1 credit
+
+---
+
+## POST /v1/screenshot
+Capture a screenshot of a URL.
+
+**Request:**
+```json
+{
+  "url": "https://example.com (required)",
+  "format": "png|jpeg",
+  "width": 1280,
+  "height": 720,
+  "full_page": false,
+  "quality": 80
+}
+```
+
+**Response:**
+```json
+{
+  "url": "string",
+  "format": "png",
+  "image_base64": "base64-encoded-image",
+  "meta": {
+    "response_time_ms": 2000,
+    "cached": false
+  }
+}
+```
+
+**Cost:** 1 credit
+
+---
+
+## POST /v1/crawl
+Start an async multi-page crawl job. Returns a job ID for polling.
+
+**Request:**
+```json
+{
+  "url": "https://example.com/list (required)",
+  "schema": {"title": "string", "price": "number"},
+  "prompt": "optional extraction guidance",
+  "list_selector": "CSS selector for list items",
+  "pagination": {
+    "type": "next_button|url_pattern|infinite_scroll",
+    "selector": ".next-page",
+    "pattern": "/page/{page}",
+    "max_pages": 10
+  },
+  "max_items": 100,
+  "timeout_ms": 60000,
+  "webhook_url": "https://your-server.com/webhook (optional, HTTPS)",
+  "webhook_secret": "your-secret (optional, for HMAC signing)"
+}
+```
+
+**Response:**
+```json
+{
+  "job_id": "job_abc123def456",
+  "status": "processing",
+  "poll_url": "/v1/jobs/job_abc123def456"
+}
+```
+
+**Cost:** 1 credit per page crawled
+
+---
+
+## GET /v1/jobs/{id}
+Poll the status of an async crawl job.
+
+**Response:**
+```json
+{
+  "job_id": "string",
+  "status": "queued|processing|completed|failed|partial",
+  "progress": {
+    "pages_crawled": 5,
+    "total_pages": 10,
+    "items_extracted": 47
+  },
+  "data": [{"title": "...", "price": 9.99}],
+  "error": null,
+  "meta": {
+    "duration_ms": 15000,
+    "credits_used": 5
+  }
+}
+```
+
+---
+
+## POST /v1/pipeline
+Search + extract in a single call. Searches the web, then extracts structured data from top results.
+
+**Request:**
+```json
+{
+  "query": "string (required, 1-500 chars)",
+  "schema": {"name": "string", "rating": "number"},
+  "max_results": 10,
+  "extract_from": 5,
+  "search_params": {
+    "engines": ["google", "bing"],
+    "language": "en",
+    "region": "US"
+  },
+  "timeout": 30,
+  "webhook_url": "https://your-server.com/webhook (optional, HTTPS)"
+}
+```
+
+**Response (sync):**
+```json
+{
+  "query": "string",
+  "results": [
+    {
+      "url": "string",
+      "title": "string",
+      "extracted_data": {"name": "...", "rating": 4.5},
+      "error": null
+    }
+  ],
+  "meta": {
+    "search_credits": 1,
+    "extract_credits": 5,
+    "total_credits": 6,
+    "response_time_ms": 8000
+  }
+}
+```
+
+**Cost:** 1 credit (search) + 1 credit per successful extraction
+
+---
+
+## POST /v1/map
+Discover all URLs on a domain. Returns a sitemap of discovered links.
+
+**Request:**
+```json
+{
+  "url": "https://example.com (required)",
+  "max_depth": 3,
+  "max_urls": 100
+}
+```
+
+**Cost:** 1 credit
+
+---
+
+## Auth
+All endpoints require an API key passed in the `X-API-Key` header.
+
+- **Register:** POST /v1/auth/register `{"email": "...", "password": "..."}`
+- **Get API key:** POST /v1/auth/keys (requires authentication)
+- **Key format:** `sc_live_...` (production) or `sc_test_...` (sandbox)
+
+## Pricing
+| Plan    | Price    | Credits/mo |
+|---------|----------|------------|
+| Free    | $0       | 1,000      |
+| Starter | $10/mo   | 15,000     |
+| Pro     | $50/mo   | 100,000    |
+| Scale   | $200/mo  | 500,000    |
+
+All endpoints cost 1 credit each. Crawl costs 1 credit per page.
+
+## Webhook Delivery
+When `webhook_url` is provided on crawl or pipeline requests, results are POSTed to your URL on completion.
+
+**Headers:**
+- `Content-Type: application/json`
+- `X-SearchClaw-Signature: sha256=<HMAC-SHA256>` (when webhook_secret provided)
+- `X-SearchClaw-Event: job.completed | job.failed`
+- `X-SearchClaw-Job-Id: <job_id>`
+- `User-Agent: SearchClaw-Webhook/1.0`
+
+**Retry policy:** 3 attempts with exponential backoff (1s, 5s, 25s).
