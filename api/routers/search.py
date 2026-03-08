@@ -46,32 +46,39 @@ async def _search_with_cache(
     """
     rl_headers = await check_rate_limit(user_info)
     credit_headers = await reserve_credits(user_info, credits)
+    no_retain = not user_info.get("data_retention", True)
 
     start = time.monotonic()
     completed = False
     is_cached = False
 
     try:
-        CACHE_REQUESTS.inc()
-        cached_result = await get_cached(cache_key)
-        if cached_result:
-            cached_result["meta"]["cached"] = True
-            is_cached = True
-            completed = True
-            CACHE_HITS.inc()
-            CREDITS_CONSUMED.inc(credits)
-            _set_headers(response, rl_headers, credit_headers)
-            return cached_result
+        if not no_retain:
+            CACHE_REQUESTS.inc()
+            cached_result = await get_cached(cache_key)
+            if cached_result:
+                cached_result["meta"]["cached"] = True
+                is_cached = True
+                completed = True
+                CACHE_HITS.inc()
+                CREDITS_CONSUMED.inc(credits)
+                _set_headers(response, rl_headers, credit_headers)
+                if no_retain:
+                    response.headers["X-Data-Retention"] = "none"
+                return cached_result
 
         results = await execute_search(**search_kwargs)
 
         if post_process:
             results = post_process(results)
 
-        await set_cached(cache_key, results, ttl=cache_ttl)
+        if not no_retain:
+            await set_cached(cache_key, results, ttl=cache_ttl)
         completed = True
         CREDITS_CONSUMED.inc(credits)
         _set_headers(response, rl_headers, credit_headers)
+        if no_retain:
+            response.headers["X-Data-Retention"] = "none"
         return results
     except HTTPException:
         raise
@@ -83,7 +90,8 @@ async def _search_with_cache(
             elapsed = int((time.monotonic() - start) * 1000)
             asyncio.create_task(
                 record_usage_to_db(
-                    user_info["api_key_id"], endpoint, credits, is_cached, elapsed
+                    user_info["api_key_id"], endpoint, credits, is_cached, elapsed,
+                    data_retention=not no_retain,
                 )
             )
 

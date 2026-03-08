@@ -47,7 +47,16 @@ async def get_api_key_user(
     # Check Redis cache first
     cache_key = f"auth:{key_hashed}"
     cached_user = await get_cached(cache_key)
+    # Detect X-Data-Retention: none header
+    data_retention = True
+    if request:
+        retention_header = request.headers.get("X-Data-Retention", "").strip().lower()
+        if retention_header == "none":
+            data_retention = False
+
     if cached_user:
+        # Override data_retention per-request (not cached)
+        cached_user["data_retention"] = data_retention
         return cached_user
 
     # Lookup in database
@@ -94,6 +103,7 @@ async def get_api_key_user(
             "rate_per_sec": limits["rate_per_sec"],
             "monthly_credits": monthly_credits,
             "email": user.email,
+            "data_retention": data_retention,
         }
 
         # Throttle last_used_at updates to once per minute to avoid DB write amplification
