@@ -73,6 +73,9 @@ def mock_redis():
         # Screenshot router
         patch("api.routers.screenshot.get_cached", side_effect=fake_get_cached),
         patch("api.routers.screenshot.set_cached", side_effect=fake_set_cached),
+        # Map service
+        patch("api.services.map_service.get_cached", side_effect=fake_get_cached),
+        patch("api.services.map_service.set_cached", side_effect=fake_set_cached),
         # Rate limit middleware
         patch("api.middleware.rate_limit.incr_counter", side_effect=fake_incr_counter),
         patch("api.middleware.rate_limit.decr_counter", side_effect=fake_decr_counter),
