@@ -14,7 +14,7 @@ from api.models.job import ScreenshotRequest, ScreenshotResponse
 from api.services.browser_pool import get_browser_pool
 from api.services.cache import get_cached, set_cached
 
-router = APIRouter(tags=["screenshot"])
+router = APIRouter(tags=["Extract"])
 
 
 def _make_screenshot_cache_key(url: str, width: int, height: int, fmt: str, full_page: bool) -> str:

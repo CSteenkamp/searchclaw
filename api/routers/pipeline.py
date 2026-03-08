@@ -17,7 +17,7 @@ from api.services.searxng_client import execute_search
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["pipeline"])
+router = APIRouter(tags=["Pipeline"])
 
 
 async def _extract_single_url(

@@ -14,7 +14,7 @@ from api.services.browser_pool import get_browser_pool
 from api.services.cache import get_cached, set_cached
 from api.services.html_cleaner import clean_html
 
-router = APIRouter(tags=["markdown"])
+router = APIRouter(tags=["Extract"])
 
 
 def _make_markdown_cache_key(url: str) -> str:

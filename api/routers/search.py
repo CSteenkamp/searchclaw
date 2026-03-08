@@ -19,7 +19,7 @@ from api.middleware.rate_limit import (
 )
 from api.middleware.metrics import CACHE_HITS, CACHE_REQUESTS, CREDITS_CONSUMED
 
-router = APIRouter(tags=["search"])
+router = APIRouter(tags=["Search"])
 
 
 def _set_headers(response: Response, *header_dicts: dict):

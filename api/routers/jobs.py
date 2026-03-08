@@ -8,7 +8,7 @@ from api.middleware.auth import get_api_key_user
 from api.models.job import JobProgress, JobStatusResponse
 from api.services.cache import get_redis_client
 
-router = APIRouter(tags=["jobs"])
+router = APIRouter(tags=["Crawl"])
 
 
 @router.get(

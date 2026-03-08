@@ -10,7 +10,7 @@ from api.middleware.auth import hash_key, get_api_key_user
 
 import bcrypt
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 class RegisterRequest(BaseModel):

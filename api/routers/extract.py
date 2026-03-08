@@ -16,7 +16,7 @@ from api.services.cache import get_cached, set_cached
 from api.services.extractor import extract
 from api.services.html_cleaner import clean_html, html_to_text
 
-router = APIRouter(tags=["extract"])
+router = APIRouter(tags=["Extract"])
 
 
 def _make_extract_cache_key(url: str, schema: dict | None, prompt: str | None) -> str:

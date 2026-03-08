@@ -11,7 +11,7 @@ from api.services.database import get_session
 from api.models.user import User, PLAN_LIMITS
 from sqlalchemy import select
 
-router = APIRouter(prefix="/billing", tags=["billing"])
+router = APIRouter(prefix="/billing", tags=["Billing"])
 
 
 @router.get("/plans")

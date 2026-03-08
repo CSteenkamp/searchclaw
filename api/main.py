@@ -1,12 +1,25 @@
 """SearchClaw API — Search, Extract, Crawl — One API for AI agents."""
 
 from contextlib import asynccontextmanager
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 
 from api.config import get_settings
 from api.routers import search, health, billing, auth, extract, markdown, screenshot, crawl, jobs, pipeline
 from api.middleware.metrics import setup_metrics
+
+tags_metadata = [
+    {"name": "Search", "description": "Web, news, and image search via SearXNG."},
+    {"name": "Extract", "description": "Schema-driven structured data extraction from URLs."},
+    {"name": "Crawl", "description": "Async multi-page crawl and extraction jobs."},
+    {"name": "Pipeline", "description": "Search + extract in a single call."},
+    {"name": "Auth", "description": "API key management and registration."},
+    {"name": "Billing", "description": "Subscription management and Stripe integration."},
+    {"name": "Health", "description": "Liveness, readiness, and status probes."},
+]
 
 
 @asynccontextmanager
@@ -50,9 +63,17 @@ def create_app() -> FastAPI:
     settings = get_settings()
 
     app = FastAPI(
-        title=settings.app_name,
-        version=settings.app_version,
-        description="Search, Extract, Crawl — One API for AI agents. $1/1K credits.",
+        title="SearchClaw API",
+        description="Search, Extract, Crawl — One API. The complete web data pipeline for AI agents.",
+        version="1.0.0",
+        terms_of_service="https://searchclaw.dev/terms",
+        contact={"name": "SearchClaw Support", "email": "support@searchclaw.dev"},
+        license_info={"name": "Proprietary"},
+        servers=[
+            {"url": "https://api.searchclaw.dev", "description": "Production"},
+            {"url": "http://localhost:8000", "description": "Local development"},
+        ],
+        openapi_tags=tags_metadata,
         docs_url="/docs",
         redoc_url="/redoc",
         lifespan=lifespan,

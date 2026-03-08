@@ -10,7 +10,7 @@ from api.middleware.rate_limit import check_rate_limit, reserve_credits
 from api.models.job import CrawlRequest, CrawlResponse
 from api.services.cache import get_redis_client
 
-router = APIRouter(tags=["crawl"])
+router = APIRouter(tags=["Crawl"])
 
 
 @router.post(
