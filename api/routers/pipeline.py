@@ -17,6 +17,7 @@ from api.services.browser_pool import get_browser_pool
 from api.services.cache import get_redis_client
 from api.services.extractor import extract
 from api.services.html_cleaner import clean_html, html_to_text
+from api.services.chunker import chunk_text
 from api.services.searxng_client import execute_search
 
 logger = logging.getLogger(__name__)
@@ -182,6 +183,24 @@ async def pipeline_endpoint(
             for r in urls_to_extract
         ]
         extraction_results = await asyncio.gather(*tasks)
+
+        # Apply chunking to each result if requested
+        if req.chunking and req.chunking.enabled:
+            for item in extraction_results:
+                if item.extracted_data is not None:
+                    text = item.extracted_data.get("raw_text", "") if isinstance(item.extracted_data, dict) else str(item.extracted_data)
+                    if text:
+                        chunks = chunk_text(
+                            text,
+                            max_size=req.chunking.max_chunk_size,
+                            overlap=req.chunking.overlap,
+                            strategy=req.chunking.strategy,
+                        )
+                        item.chunks = [
+                            {"index": c["index"], "text": c["text"], "char_count": c["char_count"], "metadata": c["metadata"]}
+                            for c in chunks
+                        ]
+                        item.total_chunks = len(chunks)
 
         # Count successful extractions for credit accounting
         actual_extract_credits = sum(

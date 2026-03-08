@@ -4,6 +4,8 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
+from api.models.extraction import ChunkingConfig, Chunk
+
 
 class SearchParams(BaseModel):
     engines: list[str] = Field(default_factory=lambda: ["google", "bing"])
@@ -18,6 +20,7 @@ class PipelineRequest(BaseModel):
     extract_from: int = Field(5, ge=1, le=20)
     search_params: SearchParams = Field(default_factory=SearchParams)
     timeout: int = Field(30, ge=5, le=120)
+    chunking: Optional[ChunkingConfig] = None
     webhook_url: Optional[str] = Field(None, description="HTTPS URL to receive results on completion")
     webhook_secret: Optional[str] = Field(None, description="Secret for HMAC-SHA256 signature verification")
 
@@ -29,6 +32,8 @@ class PipelineResultItem(BaseModel):
     title: str
     extracted_data: Optional[dict[str, Any]] = None
     error: Optional[str] = None
+    chunks: Optional[list[Chunk]] = None
+    total_chunks: Optional[int] = None
 
 
 class PipelineMeta(BaseModel):

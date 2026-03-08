@@ -14,8 +14,29 @@ from api.models.extraction import ExtractRequest, ExtractResponse, ExtractionMet
 from api.services.browser_pool import get_browser_pool
 from api.services.cache import get_cached, set_cached
 from api.services.extractor import extract
+from api.services.chunker import chunk_text
 from api.services.html_cleaner import clean_html, html_to_text
 from api.services.proxy_manager import get_proxy_manager, resolve_proxy_tier
+
+
+def _apply_chunking(resp: ExtractResponse, chunking_config) -> ExtractResponse:
+    """Apply chunking to extraction response if enabled."""
+    if not chunking_config or not chunking_config.enabled:
+        return resp
+    # Chunk the data if it's a string
+    text = resp.data if isinstance(resp.data, str) else json.dumps(resp.data)
+    chunks = chunk_text(
+        text,
+        max_size=chunking_config.max_chunk_size,
+        overlap=chunking_config.overlap,
+        strategy=chunking_config.strategy,
+    )
+    resp.chunks = [
+        {"index": c["index"], "text": c["text"], "char_count": c["char_count"], "metadata": c["metadata"]}
+        for c in chunks
+    ]
+    resp.total_chunks = len(chunks)
+    return resp
 
 router = APIRouter(tags=["Extract"])
 
@@ -107,7 +128,7 @@ async def extract_endpoint(
             completed = True
             for k, v in {**rl_headers, **credit_headers}.items():
                 response.headers[k] = v
-            return ExtractResponse(
+            raw_resp = ExtractResponse(
                 url=url,
                 data=data,
                 meta=ExtractionMeta(
@@ -115,6 +136,7 @@ async def extract_endpoint(
                     extraction_method="raw", page_title=page_title,
                 ),
             )
+            return _apply_chunking(raw_resp, req.chunking)
 
         elapsed_ms = int((time.monotonic() - start) * 1000)
         credits = 1 if result.extraction_method == "rule" else 2
@@ -130,6 +152,8 @@ async def extract_endpoint(
                 page_title=page_title,
             ),
         )
+
+        resp = _apply_chunking(resp, req.chunking)
 
         if req.cache:
             await set_cached(cache_key, resp.model_dump())

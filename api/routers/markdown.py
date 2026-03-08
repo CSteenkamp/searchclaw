@@ -12,6 +12,7 @@ from api.middleware.rate_limit import check_rate_limit, reserve_credits, release
 from api.models.job import MarkdownRequest, MarkdownResponse
 from api.services.browser_pool import get_browser_pool
 from api.services.cache import get_cached, set_cached
+from api.services.chunker import chunk_text
 from api.services.html_cleaner import clean_html
 from api.services.proxy_manager import get_proxy_manager, resolve_proxy_tier
 
@@ -116,6 +117,20 @@ async def markdown_endpoint(
             markdown=markdown,
             meta={"word_count": word_count, "cached": False, "credits_used": 1},
         )
+
+        # Apply chunking if requested
+        if req.chunking and req.chunking.enabled:
+            chunks = chunk_text(
+                markdown,
+                max_size=req.chunking.max_chunk_size,
+                overlap=req.chunking.overlap,
+                strategy=req.chunking.strategy,
+            )
+            resp.chunks = [
+                {"index": c["index"], "text": c["text"], "char_count": c["char_count"], "metadata": c["metadata"]}
+                for c in chunks
+            ]
+            resp.total_chunks = len(chunks)
 
         await set_cached(cache_key, resp.model_dump())
 

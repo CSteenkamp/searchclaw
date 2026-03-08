@@ -1,8 +1,24 @@
 """Pydantic models for extraction endpoints."""
 
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, HttpUrl, model_validator
+
+
+class ChunkingConfig(BaseModel):
+    """Configuration for content chunking."""
+    enabled: bool = False
+    max_chunk_size: int = Field(500, ge=50, le=10000)
+    overlap: int = Field(50, ge=0, le=500)
+    strategy: Literal["fixed", "sentence", "semantic"] = "fixed"
+
+
+class Chunk(BaseModel):
+    """A single content chunk."""
+    index: int
+    text: str
+    char_count: int
+    metadata: dict[str, Any] = {}
 
 
 class ExtractRequest(BaseModel):
@@ -13,6 +29,7 @@ class ExtractRequest(BaseModel):
     timeout_ms: int = Field(30000, ge=1000, le=60000)
     cache: bool = True
     proxy: Literal["none", "datacenter", "residential"] | None = None
+    chunking: Optional[ChunkingConfig] = None
 
     model_config = {"populate_by_name": True}
 
@@ -37,3 +54,5 @@ class ExtractResponse(BaseModel):
     url: str
     data: dict[str, Any] | str
     meta: ExtractionMeta
+    chunks: Optional[list[Chunk]] = None
+    total_chunks: Optional[int] = None

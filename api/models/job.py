@@ -1,8 +1,10 @@
 """Pydantic models for crawl jobs, markdown, and screenshot endpoints."""
 
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, HttpUrl
+
+from api.models.extraction import ChunkingConfig, Chunk
 
 ProxyTier = Literal["none", "datacenter", "residential"]
 
@@ -56,6 +58,7 @@ class MarkdownRequest(BaseModel):
     include_links: bool = True
     main_content_only: bool = True
     proxy: ProxyTier | None = None
+    chunking: Optional[ChunkingConfig] = None
 
     model_config = {"populate_by_name": True}
 
@@ -65,6 +68,8 @@ class MarkdownResponse(BaseModel):
     title: str | None = None
     markdown: str
     meta: dict[str, Any]
+    chunks: Optional[list[Chunk]] = None
+    total_chunks: Optional[int] = None
 
 
 class ScreenshotRequest(BaseModel):
