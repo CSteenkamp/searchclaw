@@ -85,6 +85,9 @@ def mock_redis():
         patch("api.middleware.auth.set_cached", side_effect=fake_set_cached),
         patch("api.middleware.auth.get_counter", side_effect=fake_get_counter),
         patch("api.middleware.auth.incr_counter", side_effect=fake_incr_counter),
+        # Agent router
+        patch("api.routers.agent.get_redis_client", return_value=None),
+        patch("api.routers.agent.record_usage_to_db", new_callable=AsyncMock),
     ]
 
     with ExitStack() as stack:
