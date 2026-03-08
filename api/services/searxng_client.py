@@ -88,6 +88,7 @@ async def execute_search(
     language: str = "en",
     safesearch: int = 1,
     time_range: Optional[str] = None,
+    timeout: Optional[float] = None,
 ) -> dict:
     """Execute a search with automatic retry across SearXNG instances."""
     if not _client:
@@ -115,7 +116,8 @@ async def execute_search(
             params["time_range"] = time_range
 
         try:
-            resp = await _client.get(f"{instance}/search", params=params)
+            req_timeout = timeout if timeout else None
+            resp = await _client.get(f"{instance}/search", params=params, timeout=req_timeout)
             resp.raise_for_status()
             data = resp.json()
             _record_success(instance)
@@ -170,3 +172,31 @@ async def execute_search(
         }
 
     raise RuntimeError(f"All SearXNG instances failed after {attempts} attempts: {last_error}")
+
+
+async def search_multi(
+    queries: list[str],
+    categories: list[str] | None = None,
+    count: int = 10,
+    language: str = "en",
+    safesearch: int = 1,
+    time_range: Optional[str] = None,
+    timeout: float = 20.0,
+) -> list[dict]:
+    """Execute multiple search queries concurrently and return all result sets."""
+    import asyncio
+
+    tasks = [
+        execute_search(
+            query=q,
+            categories=categories,
+            count=count,
+            language=language,
+            safesearch=safesearch,
+            time_range=time_range,
+            timeout=timeout,
+        )
+        for q in queries
+    ]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    return [r for r in results if isinstance(r, dict)]

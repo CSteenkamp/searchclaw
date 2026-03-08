@@ -3,12 +3,12 @@
 import asyncio
 import time
 from fastapi import APIRouter, Query, Depends, Response, HTTPException
-from typing import Optional
+from typing import Literal, Optional
 
 from api.models.search import SearchResponse
-from api.services.searxng_client import execute_search
+from api.services.searxng_client import execute_search, search_multi
 from api.services.cache import get_cached, set_cached
-from api.services.query_normalizer import normalize_query
+from api.services.query_normalizer import normalize_query, reformulate_query
 from api.config import get_settings
 from api.middleware.auth import get_api_key_user
 from api.middleware.rate_limit import (
@@ -88,6 +88,76 @@ async def _search_with_cache(
             )
 
 
+def _compute_tfidf_score(query: str, result: dict) -> float:
+    """Simple keyword overlap score between query and result title+snippet."""
+    query_terms = set(query.lower().split())
+    text = f"{result.get('title', '')} {result.get('snippet', '')}".lower()
+    text_words = set(text.split())
+    if not query_terms:
+        return 0.0
+    overlap = query_terms & text_words
+    return len(overlap) / len(query_terms)
+
+
+def _merge_and_dedup_results(result_sets: list[dict], query: str, count: int) -> dict:
+    """Merge multiple SearXNG result sets, deduplicate by URL, re-rank by relevance."""
+    seen_urls: set[str] = set()
+    all_results: list[dict] = []
+    all_suggestions: list[str] = []
+    all_engines: set[str] = set()
+    infobox = None
+
+    for result_set in result_sets:
+        if not infobox and result_set.get("infobox"):
+            infobox = result_set["infobox"]
+        all_suggestions.extend(result_set.get("suggestions", []))
+        for engine in result_set.get("meta", {}).get("engines_used", []):
+            all_engines.add(engine)
+        for r in result_set.get("results", []):
+            url = r.get("url", "")
+            if url and url not in seen_urls:
+                seen_urls.add(url)
+                all_results.append(r)
+
+    # Re-rank by TF-IDF relevance score
+    scored = [(r, _compute_tfidf_score(query, r)) for r in all_results]
+    scored.sort(key=lambda x: x[1], reverse=True)
+
+    final_results = []
+    for i, (r, _) in enumerate(scored[:count]):
+        r["position"] = i + 1
+        final_results.append(r)
+
+    # Deduplicate suggestions
+    seen_sugg: set[str] = set()
+    unique_suggestions = []
+    for s in all_suggestions:
+        if s not in seen_sugg:
+            seen_sugg.add(s)
+            unique_suggestions.append(s)
+
+    return {
+        "query": query,
+        "results": final_results,
+        "infobox": infobox,
+        "suggestions": unique_suggestions[:10],
+        "meta": {
+            "total_results": len(final_results),
+            "cached": False,
+            "response_time_ms": 0,
+            "engines_used": list(all_engines),
+        },
+    }
+
+
+# Depth mode configuration
+_DEPTH_CONFIG = {
+    "fast": {"timeout": 3.0, "credits": 1},
+    "basic": {"timeout": 10.0, "credits": 1},
+    "deep": {"timeout": 20.0, "credits": 2},
+}
+
+
 @router.get("/search", response_model=SearchResponse)
 async def web_search(
     response: Response,
@@ -98,25 +168,85 @@ async def web_search(
     language: str = Query("en", max_length=10, description="Language code"),
     safesearch: int = Query(1, ge=0, le=2, description="Safe search level"),
     freshness: Optional[str] = Query(None, description="day, week, month, year"),
+    depth: Literal["fast", "basic", "deep"] = Query("basic", description="Search depth: fast (3s), basic (10s), deep (20s, 2 credits)"),
     user_info: dict = Depends(get_api_key_user),
 ):
     """Web search — returns structured results from multiple search engines."""
     settings = get_settings()
     norm_q = normalize_query(q)
-    cache_key = f"web:{norm_q}:{count}:{offset}:{country}:{language}:{safesearch}:{freshness}"
+    depth_cfg = _DEPTH_CONFIG[depth]
+    credits = depth_cfg["credits"]
+    cache_key = f"web:{norm_q}:{count}:{offset}:{country}:{language}:{safesearch}:{freshness}:{depth}"
 
-    return await _search_with_cache(
-        response=response,
-        user_info=user_info,
-        cache_key=cache_key,
-        cache_ttl=settings.cache_ttl_web,
-        credits=1,
-        endpoint="/v1/search",
-        search_kwargs=dict(
-            query=q, categories=["general"], count=count, offset=offset,
-            language=language, safesearch=safesearch, time_range=freshness,
-        ),
-    )
+    if depth == "deep":
+        # Deep mode: multi-query search with merge + dedup + re-rank
+        rl_headers = await check_rate_limit(user_info)
+        credit_headers = await reserve_credits(user_info, credits)
+
+        start = time.monotonic()
+        completed = False
+        is_cached = False
+
+        try:
+            CACHE_REQUESTS.inc()
+            cached_result = await get_cached(cache_key)
+            if cached_result:
+                cached_result["meta"]["cached"] = True
+                is_cached = True
+                completed = True
+                CACHE_HITS.inc()
+                CREDITS_CONSUMED.inc(credits)
+                _set_headers(response, rl_headers, credit_headers)
+                return cached_result
+
+            reformulated = reformulate_query(q)
+            result_sets = await search_multi(
+                queries=[q, reformulated],
+                categories=["general"],
+                count=count,
+                language=language,
+                safesearch=safesearch,
+                time_range=freshness,
+                timeout=depth_cfg["timeout"],
+            )
+
+            merged = _merge_and_dedup_results(result_sets, q, count)
+            elapsed_ms = int((time.monotonic() - start) * 1000)
+            merged["meta"]["response_time_ms"] = elapsed_ms
+
+            await set_cached(cache_key, merged, ttl=settings.cache_ttl_web)
+            completed = True
+            CREDITS_CONSUMED.inc(credits)
+            _set_headers(response, rl_headers, credit_headers)
+            return merged
+        except HTTPException:
+            raise
+        except Exception:
+            await release_credits(user_info, credits)
+            raise
+        finally:
+            if completed:
+                elapsed = int((time.monotonic() - start) * 1000)
+                asyncio.create_task(
+                    record_usage_to_db(
+                        user_info["api_key_id"], "/v1/search", credits, is_cached, elapsed
+                    )
+                )
+    else:
+        # Fast and basic modes
+        return await _search_with_cache(
+            response=response,
+            user_info=user_info,
+            cache_key=cache_key,
+            cache_ttl=settings.cache_ttl_web,
+            credits=credits,
+            endpoint="/v1/search",
+            search_kwargs=dict(
+                query=q, categories=["general"], count=count, offset=offset,
+                language=language, safesearch=safesearch, time_range=freshness,
+                timeout=depth_cfg["timeout"],
+            ),
+        )
 
 
 @router.get("/news", response_model=SearchResponse)
