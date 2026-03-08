@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 
 from api.config import get_settings
-from api.routers import search, health, billing, auth, extract, markdown, screenshot, crawl, jobs, pipeline, map as map_router_mod, browse
+from api.routers import search, health, billing, auth, extract, markdown, screenshot, crawl, jobs, pipeline, map as map_router_mod, browse, orgs
 from api.middleware.metrics import setup_metrics
 
 tags_metadata = [
@@ -22,6 +22,7 @@ tags_metadata = [
     {"name": "Map", "description": "URL discovery via sitemap + BFS crawl."},
     {"name": "Browse", "description": "Interactive browser actions — click, type, scroll, extract."},
     {"name": "Agent", "description": "Autonomous data gathering from natural language prompts."},
+    {"name": "Orgs", "description": "Organisation/team account management."},
 ]
 
 
@@ -106,6 +107,7 @@ def create_app() -> FastAPI:
     app.include_router(pipeline.router, prefix="/v1")
     app.include_router(map_router_mod.router, prefix="/v1")
     app.include_router(browse.router, prefix="/v1")
+    app.include_router(orgs.router, prefix="/v1")
 
     # Prometheus metrics
     setup_metrics(app)

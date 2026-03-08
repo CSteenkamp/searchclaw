@@ -1,6 +1,6 @@
 """User and API key database models."""
 
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, BigInteger
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, BigInteger, Text
 from sqlalchemy.orm import relationship, DeclarativeBase
 from sqlalchemy.sql import func
 import secrets
@@ -35,9 +35,12 @@ class APIKey(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    org_id = Column(Integer, ForeignKey("organisations.id"), nullable=True)
     key_prefix = Column(String(20), nullable=False)  # sc_live_ or sc_test_
     key_hash = Column(String(255), nullable=False, unique=True, index=True)
     name = Column(String(255), default="Default")
+    environment = Column(String(20), default="production")  # production, staging, development, test
+    description = Column(Text, default="")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_used_at = Column(DateTime(timezone=True), nullable=True)
@@ -60,6 +63,7 @@ class UsageRecord(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     api_key_id = Column(Integer, ForeignKey("api_keys.id"), nullable=False)
+    org_id = Column(Integer, ForeignKey("organisations.id"), nullable=True)
     endpoint = Column(String(100), nullable=False)
     credits_used = Column(Integer, default=1)
     cached = Column(Boolean, default=False)

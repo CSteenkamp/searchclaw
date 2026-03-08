@@ -11,6 +11,7 @@ from api.config import get_settings
 from api.services.database import get_session
 from api.services.cache import get_cached, set_cached, get_counter, incr_counter
 from api.models.user import APIKey, User, PLAN_LIMITS
+from api.models.org import Organisation
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
@@ -63,15 +64,35 @@ async def get_api_key_user(
             raise HTTPException(status_code=401, detail="Invalid or revoked API key.")
 
         api_key_obj, user = row
-        plan = user.plan or "free"
-        limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])
+
+        # If org key, load plan/limits from organisation instead of user
+        org_id = api_key_obj.org_id
+        if org_id:
+            org = (await session.execute(
+                select(Organisation).where(Organisation.id == org_id, Organisation.is_active == True)
+            )).scalar_one_or_none()
+            if org:
+                plan = org.plan or "free"
+                limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])
+                # Override monthly_credits from org if set
+                monthly_credits = org.monthly_credits or limits["monthly_credits"]
+            else:
+                plan = user.plan or "free"
+                limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])
+                monthly_credits = limits["monthly_credits"]
+                org_id = None
+        else:
+            plan = user.plan or "free"
+            limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])
+            monthly_credits = limits["monthly_credits"]
 
         user_info = {
             "user_id": user.id,
             "api_key_id": api_key_obj.id,
+            "org_id": org_id,
             "plan": plan,
             "rate_per_sec": limits["rate_per_sec"],
-            "monthly_credits": limits["monthly_credits"],
+            "monthly_credits": monthly_credits,
             "email": user.email,
         }
 
