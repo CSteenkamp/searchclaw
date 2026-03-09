@@ -39,7 +39,7 @@ async def get_api_key_user(
     if not api_key:
         raise HTTPException(status_code=401, detail="Missing API key. Pass X-API-Key header.")
 
-    if not api_key.startswith("dc_"):
+    if not api_key.startswith("sc_"):
         raise HTTPException(status_code=401, detail="Invalid API key format.")
 
     key_hashed = hash_key(api_key)

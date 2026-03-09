@@ -114,6 +114,8 @@ async def stripe_webhook(request: Request):
         await _handle_payment_failed(data)
     elif event_type == "customer.subscription.updated":
         await _handle_subscription_updated(data)
+    elif event_type == "customer.subscription.deleted":
+        await _handle_subscription_deleted(data)
 
     return JSONResponse(content={"status": "ok"})
 
@@ -150,6 +152,20 @@ async def _handle_payment_failed(invoice: dict):
     """Handle invoice.payment_failed — mark user for follow-up."""
     # For now, just log. Could send email or restrict access after grace period.
     pass
+
+
+async def _handle_subscription_deleted(subscription: dict):
+    """Handle customer.subscription.deleted — revert user to free plan."""
+    customer_id = subscription.get("customer")
+
+    async for session in get_session():
+        result = await session.execute(
+            select(User).where(User.stripe_customer_id == customer_id)
+        )
+        user = result.scalar_one_or_none()
+        if user:
+            user.plan = "free"
+            await session.commit()
 
 
 async def _handle_subscription_updated(subscription: dict):

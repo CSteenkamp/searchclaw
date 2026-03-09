@@ -19,11 +19,24 @@ class RegisterRequest(BaseModel):
     name: str = ""
 
 
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
 class RegisterResponse(BaseModel):
     user_id: int
     email: str
     plan: str
     api_key: str
+
+
+class LoginResponse(BaseModel):
+    user_id: int
+    email: str
+    plan: str
+    api_key: str
+    access_token: str
 
 
 class APIKeyResponse(BaseModel):
@@ -38,6 +51,9 @@ async def register(req: RegisterRequest):
 
     The API key is shown only once — store it securely.
     """
+    if len(req.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
+
     async for session in get_session():
         # Check if email already exists
         existing = await session.execute(
@@ -73,6 +89,67 @@ async def register(req: RegisterRequest):
             email=user.email,
             plan="free",
             api_key=full_key,
+        )
+
+
+@router.post("/login", response_model=LoginResponse)
+async def login(req: LoginRequest):
+    """Authenticate with email and password, returns an existing API key.
+
+    Use the returned api_key (or access_token) for all subsequent API calls.
+    """
+    async for session in get_session():
+        result = await session.execute(
+            select(User).where(User.email == req.email, User.is_active == True)
+        )
+        user = result.scalar_one_or_none()
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid email or password.")
+
+        if not bcrypt.checkpw(req.password.encode(), user.password_hash.encode()):
+            raise HTTPException(status_code=401, detail="Invalid email or password.")
+
+        # Get the user's first active API key
+        key_result = await session.execute(
+            select(APIKey).where(
+                APIKey.user_id == user.id,
+                APIKey.is_active == True,
+            ).order_by(APIKey.id)
+        )
+        api_key_obj = key_result.scalar_one_or_none()
+
+        if not api_key_obj:
+            # Generate a new key if none exist
+            full_key, prefix = APIKey.generate_key()
+            api_key_obj = APIKey(
+                user_id=user.id,
+                key_prefix=prefix,
+                key_hash=hash_key(full_key),
+                name="Default",
+            )
+            session.add(api_key_obj)
+            await session.commit()
+            api_key_str = full_key
+        else:
+            # We can't recover the original key from the hash.
+            # Generate a fresh key for the login session.
+            full_key, prefix = APIKey.generate_key()
+            new_key = APIKey(
+                user_id=user.id,
+                key_prefix=prefix,
+                key_hash=hash_key(full_key),
+                name="Login session",
+            )
+            session.add(new_key)
+            await session.commit()
+            api_key_str = full_key
+
+        return LoginResponse(
+            user_id=user.id,
+            email=user.email,
+            plan=user.plan or "free",
+            api_key=api_key_str,
+            access_token=api_key_str,
         )
 
 

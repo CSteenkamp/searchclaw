@@ -10,6 +10,7 @@ from fastapi.responses import PlainTextResponse
 from api.config import get_settings
 from api.routers import search, health, billing, auth, extract, markdown, screenshot, crawl, jobs, pipeline, map as map_router_mod, browse, agent, orgs, usage
 from api.middleware.metrics import setup_metrics
+from api.middleware.security import SecurityHeadersMiddleware
 
 tags_metadata = [
     {"name": "Search", "description": "Web, news, and image search via SearXNG."},
@@ -88,6 +89,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
