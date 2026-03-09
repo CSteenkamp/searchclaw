@@ -19,7 +19,12 @@ metadata:
   namespace: searchclaw
 type: Opaque
 stringData:
-  STRIPE_SECRET_KEY: ""
-  STRIPE_WEBHOOK_SECRET: ""
+  STRIPE_SECRET_KEY: ""       # Set via kubectl or sealed-secrets
+  STRIPE_WEBHOOK_SECRET: ""   # Set via kubectl or sealed-secrets
+  STRIPE_PRICE_STARTER: ""
+  STRIPE_PRICE_PRO: ""
+  STRIPE_PRICE_SCALE: ""
+  STRIPE_PRICE_METERED: ""
+  STRIPE_METER_EVENT_NAME: "searchclaw_query_usage"
   CF_API_TOKEN: ""
   CF_ZONE_ID: ""
