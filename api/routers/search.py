@@ -3,6 +3,7 @@
 import asyncio
 import time
 from fastapi import APIRouter, Query, Depends, Response, HTTPException
+from pydantic import BaseModel, Field
 from typing import Literal, Optional
 
 from api.models.search import SearchResponse
@@ -165,26 +166,73 @@ _DEPTH_CONFIG = {
     "deep": {"timeout": 20.0, "credits": 2},
 }
 
+# Domains that indicate irrelevant image results (icon libraries, etc.)
+_IMAGE_FILTER_PATTERNS = ["jsdelivr.net", "devicons", "lucide"]
 
-@router.get("/search", response_model=SearchResponse)
-async def web_search(
+# Non-English domains to filter when query is ASCII-only
+_NON_ENGLISH_DOMAINS = ["zhihu.com", "baidu.com", "bilibili.com", "csdn.net", "douban.com"]
+
+
+def _is_ascii_query(query: str) -> bool:
+    """Return True if the query contains only ASCII characters (likely English)."""
+    return all(ord(c) < 128 for c in query)
+
+
+def _filter_non_english_results(results: list[dict], query: str) -> list[dict]:
+    """Remove results from non-English domains when the query appears to be English."""
+    if not _is_ascii_query(query):
+        return results
+    return [
+        r for r in results
+        if not any(domain in r.get("url", "") for domain in _NON_ENGLISH_DOMAINS)
+    ]
+
+
+def _filter_irrelevant_images(results: list[dict]) -> list[dict]:
+    """Remove results from known icon/devicon CDN domains."""
+    return [
+        r for r in results
+        if not any(pattern in r.get("url", "") for pattern in _IMAGE_FILTER_PATTERNS)
+    ]
+
+
+class SearchPostRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=500, description="Search query")
+    count: int = Field(10, ge=1, le=50)
+    offset: int = Field(0, ge=0)
+    country: Optional[str] = Field(None, max_length=5)
+    language: str = Field("en", max_length=10)
+    safesearch: int = Field(1, ge=0, le=2)
+    freshness: Optional[str] = None
+    depth: Literal["fast", "basic", "deep"] = "basic"
+    mode: Optional[str] = None
+
+
+async def _do_web_search(
     response: Response,
-    q: str = Query(..., min_length=1, max_length=500, description="Search query"),
-    count: int = Query(10, ge=1, le=50, description="Results per page"),
-    offset: int = Query(0, ge=0, description="Pagination offset"),
-    country: Optional[str] = Query(None, max_length=5, description="Country code"),
-    language: str = Query("en", max_length=10, description="Language code"),
-    safesearch: int = Query(1, ge=0, le=2, description="Safe search level"),
-    freshness: Optional[str] = Query(None, description="day, week, month, year"),
-    depth: Literal["fast", "basic", "deep"] = Query("basic", description="Search depth: fast (3s), basic (10s), deep (20s, 2 credits)"),
-    user_info: dict = Depends(get_api_key_user),
+    q: str,
+    count: int,
+    offset: int,
+    country: Optional[str],
+    language: str,
+    safesearch: int,
+    freshness: Optional[str],
+    depth: str,
+    user_info: dict,
 ):
-    """Web search — returns structured results from multiple search engines."""
+    """Shared web search logic for GET and POST routes."""
     settings = get_settings()
     norm_q = normalize_query(q)
     depth_cfg = _DEPTH_CONFIG[depth]
     credits = depth_cfg["credits"]
     cache_key = f"web:{norm_q}:{count}:{offset}:{country}:{language}:{safesearch}:{freshness}:{depth}"
+
+    def _post_filter(results):
+        """Filter non-English results for ASCII queries."""
+        r_list = results.get("results", [])
+        results["results"] = _filter_non_english_results(r_list, q)
+        results["meta"]["total_results"] = len(results["results"])
+        return results
 
     if depth == "deep":
         # Deep mode: multi-query search with merge + dedup + re-rank
@@ -219,6 +267,7 @@ async def web_search(
             )
 
             merged = _merge_and_dedup_results(result_sets, q, count)
+            merged = _post_filter(merged)
             elapsed_ms = int((time.monotonic() - start) * 1000)
             merged["meta"]["response_time_ms"] = elapsed_ms
 
@@ -254,7 +303,40 @@ async def web_search(
                 language=language, safesearch=safesearch, time_range=freshness,
                 timeout=depth_cfg["timeout"],
             ),
+            post_process=_post_filter,
         )
+
+
+@router.get("/search", response_model=SearchResponse)
+async def web_search(
+    response: Response,
+    q: str = Query(..., min_length=1, max_length=500, description="Search query"),
+    count: int = Query(10, ge=1, le=50, description="Results per page"),
+    offset: int = Query(0, ge=0, description="Pagination offset"),
+    country: Optional[str] = Query(None, max_length=5, description="Country code"),
+    language: str = Query("en", max_length=10, description="Language code"),
+    safesearch: int = Query(1, ge=0, le=2, description="Safe search level"),
+    freshness: Optional[str] = Query(None, description="day, week, month, year"),
+    depth: Literal["fast", "basic", "deep"] = Query("basic", description="Search depth: fast (3s), basic (10s), deep (20s, 2 credits)"),
+    user_info: dict = Depends(get_api_key_user),
+):
+    """Web search — returns structured results from multiple search engines."""
+    return await _do_web_search(
+        response, q, count, offset, country, language, safesearch, freshness, depth, user_info,
+    )
+
+
+@router.post("/search", response_model=SearchResponse)
+async def web_search_post(
+    req: SearchPostRequest,
+    response: Response,
+    user_info: dict = Depends(get_api_key_user),
+):
+    """Web search via POST — accepts JSON body with query field."""
+    return await _do_web_search(
+        response, req.query, req.count, req.offset, req.country, req.language,
+        req.safesearch, req.freshness, req.depth, user_info,
+    )
 
 
 @router.get("/news", response_model=SearchResponse)
@@ -300,6 +382,11 @@ async def image_search(
     norm_q = normalize_query(q)
     cache_key = f"images:{norm_q}:{count}:{offset}:{safesearch}"
 
+    def _filter_images(results):
+        results["results"] = _filter_irrelevant_images(results.get("results", []))
+        results["meta"]["total_results"] = len(results["results"])
+        return results
+
     return await _search_with_cache(
         response=response,
         user_info=user_info,
@@ -311,7 +398,15 @@ async def image_search(
             query=q, categories=["images"], count=count, offset=offset,
             safesearch=safesearch,
         ),
+        post_process=_filter_images,
     )
+
+
+def _filter_ai_results(results: dict, query: str) -> dict:
+    """Filter non-English results from AI search when query is ASCII."""
+    results["results"] = _filter_non_english_results(results.get("results", []), query)
+    results["meta"]["total_results"] = len(results["results"])
+    return results
 
 
 def _build_ai_context(results: dict) -> dict:
@@ -354,7 +449,9 @@ async def ai_search(
             query=q, categories=["general"], count=count,
             language=language, time_range=freshness,
         ),
-        post_process=_build_ai_context,
+        post_process=lambda results: _build_ai_context(
+            _filter_ai_results(results, q)
+        ),
     )
 
 

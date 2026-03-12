@@ -127,6 +127,21 @@ async def pipeline_endpoint(
     if req.webhook_url and req.extract_from > 3:
         return await _pipeline_async(req, user_info)
 
+    try:
+        return await asyncio.wait_for(
+            _pipeline_endpoint_inner(req, response, user_info, pool),
+            timeout=30,
+        )
+    except asyncio.TimeoutError:
+        raise HTTPException(504, "Request timed out after 30 seconds. The browser service may be unavailable.")
+
+
+async def _pipeline_endpoint_inner(
+    req: PipelineRequest,
+    response: Response,
+    user_info: dict,
+    pool,
+) -> PipelineResponse:
     # Total credits: 1 (search) + extract_from (extractions)
     total_credits = 1 + req.extract_from
 

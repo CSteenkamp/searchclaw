@@ -67,6 +67,21 @@ async def markdown_endpoint(
     if pool is None:
         raise HTTPException(503, "Browser pool not initialized")
 
+    try:
+        return await asyncio.wait_for(
+            _markdown_endpoint_inner(req, response, user_info, pool),
+            timeout=30,
+        )
+    except asyncio.TimeoutError:
+        raise HTTPException(504, "Request timed out after 30 seconds. The browser service may be unavailable.")
+
+
+async def _markdown_endpoint_inner(
+    req: MarkdownRequest,
+    response: Response,
+    user_info: dict,
+    pool,
+) -> MarkdownResponse:
     rl_headers = await check_rate_limit(user_info)
     credit_headers = await reserve_credits(user_info, credits=1)
 

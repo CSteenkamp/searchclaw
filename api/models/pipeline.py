@@ -2,7 +2,7 @@
 
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 from api.models.extraction import ChunkingConfig, Chunk
 
@@ -15,7 +15,11 @@ class SearchParams(BaseModel):
 
 class PipelineRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=500)
-    schema_: dict[str, Any] = Field(..., alias="schema")
+    schema_: dict[str, Any] = Field(
+        ...,
+        alias="schema",
+        validation_alias=AliasChoices("schema", "extract_schema"),
+    )
     max_results: int = Field(10, ge=1, le=50)
     extract_from: int = Field(5, ge=1, le=20)
     search_params: SearchParams = Field(default_factory=SearchParams)
