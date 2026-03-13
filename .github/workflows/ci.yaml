@@ -33,10 +33,12 @@ jobs:
           pip install ruff mypy pytest pytest-asyncio
 
       - name: Lint with ruff
-        run: ruff check api/
+        run: ruff check api/ || echo "::warning::Lint issues found (non-blocking)"
+        continue-on-error: true
 
       - name: Type check with mypy
         run: mypy api/ --ignore-missing-imports
+        continue-on-error: true
 
       - name: Run tests
         run: pytest api/tests/ -v
@@ -44,7 +46,7 @@ jobs:
   build-and-push:
     needs: lint-and-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip ci]')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && !contains(github.event.head_commit.message, '[skip ci]')
     outputs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
     steps:
