@@ -10,6 +10,8 @@ from api.models.search import SearchResponse
 from api.services.searxng_client import execute_search, search_multi
 from api.services.cache import get_cached, set_cached
 from api.services.query_normalizer import normalize_query, reformulate_query
+from api.services.multi_engine_search import enhanced_multi_search
+from api.services.geo_enhancer import detect_location_context, enhance_query_geographically
 from api.config import get_settings
 from api.middleware.auth import get_api_key_user
 from api.middleware.rate_limit import (
@@ -506,6 +508,123 @@ async def suggest(
                     user_info["api_key_id"], "/v1/suggest", 1, is_cached, elapsed
                 )
             )
+
+
+@router.get("/search/enhanced", response_model=SearchResponse)
+async def enhanced_search(
+    response: Response,
+    q: str = Query(..., min_length=1, max_length=500, description="Search query"),
+    count: int = Query(10, ge=1, le=50, description="Results per page"),
+    country: str = Query("south_africa", description="Force country context (south_africa, namibia, botswana)"),
+    engines: Optional[str] = Query(None, description="Comma-separated list: brave,bing,duckduckgo,searxng"),
+    user_info: dict = Depends(get_api_key_user),
+):
+    """
+    Enhanced geographic search with multi-engine support and local result optimization.
+    
+    Automatically detects location context and enhances queries for better local results.
+    Uses multiple search engines and specialized ranking for South African content.
+    Costs 2 credits due to multi-engine processing.
+    """
+    settings = get_settings()
+    
+    # Parse engines parameter
+    engine_list = None
+    if engines:
+        engine_list = [e.strip() for e in engines.split(",") if e.strip()]
+    
+    # Rate limiting and credit reservation
+    rl_headers = await check_rate_limit(user_info)
+    credit_headers = await reserve_credits(user_info, credits=2)
+    
+    # Build cache key
+    norm_q = normalize_query(q)
+    engines_str = engines or "default"
+    cache_key = f"enhanced:{norm_q}:{count}:{country}:{engines_str}"
+    
+    start = time.monotonic()
+    completed = False
+    is_cached = False
+    
+    try:
+        # Check cache first
+        CACHE_REQUESTS.inc()
+        cached = await get_cached(cache_key)
+        if cached:
+            is_cached = True
+            completed = True
+            CACHE_HITS.inc()
+            CREDITS_CONSUMED.inc(2)
+            _set_headers(response, rl_headers, credit_headers)
+            return cached
+        
+        # Execute enhanced multi-engine search
+        results = await enhanced_multi_search(
+            query=q,
+            engines=engine_list,
+            force_country=country,
+            max_results=count
+        )
+        
+        # Cache results
+        await set_cached(cache_key, results, ttl=settings.cache_ttl_web)
+        completed = True
+        CREDITS_CONSUMED.inc(2)
+        _set_headers(response, rl_headers, credit_headers)
+        
+        return results
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        await release_credits(user_info, credits=2)
+        # Fallback to regular search if enhanced search fails
+        try:
+            fallback_results = await execute_search(
+                query=q, categories=["general"], count=count
+            )
+            completed = True
+            CREDITS_CONSUMED.inc(2)
+            _set_headers(response, rl_headers, credit_headers)
+            return fallback_results
+        except:
+            raise HTTPException(status_code=500, detail=f"Enhanced search failed: {str(e)}")
+    finally:
+        if completed:
+            elapsed = int((time.monotonic() - start) * 1000)
+            asyncio.create_task(
+                record_usage_to_db(
+                    user_info["api_key_id"], "/v1/search/enhanced", 2, is_cached, elapsed
+                )
+            )
+
+
+@router.get("/search/analyze")
+async def analyze_query_geography(
+    q: str = Query(..., min_length=1, max_length=500, description="Query to analyze"),
+    country: str = Query("south_africa", description="Country context to apply"),
+    user_info: dict = Depends(get_api_key_user),
+):
+    """
+    Analyze query for geographic context and return enhanced query variations.
+    
+    Useful for debugging and understanding how geographic enhancement works.
+    Free endpoint - no credits charged.
+    """
+    location_context = detect_location_context(q)
+    enhanced_queries = enhance_query_geographically(q, force_country=country)
+    
+    return {
+        "original_query": q,
+        "location_context": location_context,
+        "enhanced_queries": enhanced_queries,
+        "country_applied": country,
+        "recommendations": {
+            "use_enhanced_search": bool(location_context),
+            "suggested_engines": ["brave", "bing"] if location_context else ["searxng"],
+            "estimated_improvement": "high" if location_context else "low"
+        }
+    }
 
 
 @router.get("/usage")
