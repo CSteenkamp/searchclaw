@@ -14,6 +14,12 @@ WORKDIR /app
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
 
+# Install Playwright system deps + Chromium browser
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
+RUN apt-get update && \
+    playwright install --with-deps chromium && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Copy application and migration files
 COPY api/ ./api/
 COPY migrations/ ./migrations/
@@ -30,8 +36,8 @@ exec uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 4
 EOF
 RUN chmod +x /app/start.sh
 
-# Non-root user
-RUN useradd -r -s /bin/false appuser
+# Non-root user (Playwright needs writable home for browser cache)
+RUN useradd -r -m -s /bin/false appuser
 USER appuser
 
 EXPOSE 8000
