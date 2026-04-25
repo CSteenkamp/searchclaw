@@ -29,7 +29,7 @@ celery[redis]>=5.4.0
 playwright>=1.40.0
 html2text>=2024.2.0
 beautifulsoup4>=4.12.0
-lxml>=5.0.0
+lxml>=6.1.0
 
 # LLM clients (spec 2)
 openai>=1.0.0
