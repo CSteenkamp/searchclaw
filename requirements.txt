@@ -48,5 +48,5 @@ prometheus-client>=0.21.0
 hcloud>=2.4.0
 
 # Cache warming (Google Trends)
-pytrends>=4.9.0
+pytrends>=4.9.2
 psycopg2-binary>=2.9.0
